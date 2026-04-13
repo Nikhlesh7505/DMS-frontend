@@ -1,0 +1,441 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles - Glassmorphism System */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 min-h-screen antialiased bg-fixed selection:bg-indigo-500/30;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+  }
+  
+  .dark body {
+    background-image: 
+      radial-gradient(ellipse at 0% 0%, rgba(99, 102, 241, 0.18) 0px, transparent 55%),
+      radial-gradient(ellipse at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 55%),
+      radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 60%);
+  }
+}
+
+@layer components {
+  /* GLASS BUTTONS */
+  .btn {
+    @apply relative inline-flex items-center justify-center px-5 py-2.5 border border-white/20 dark:border-white/10 text-sm font-semibold rounded-[16px] shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 ease-out overflow-hidden;
+  }
+  
+  .btn::before {
+    @apply content-[''] absolute inset-0 bg-gradient-to-b from-white/10 to-transparent opacity-50 pointer-events-none;
+  }
+  
+  .btn-primary {
+    @apply btn bg-blue-600 dark:bg-blue-600/80 text-white shadow-[0_8px_32px_-8px_rgba(37,99,235,0.5)] focus:ring-blue-500 hover:shadow-[0_12px_40px_-8px_rgba(37,99,235,0.7)] border-t border-white/40;
+  }
+  
+  .btn-danger {
+    @apply btn bg-red-600 dark:bg-red-600/80 text-white shadow-[0_8px_32px_-8px_rgba(220,38,38,0.5)] focus:ring-red-500 hover:shadow-[0_12px_40px_-8px_rgba(220,38,38,0.7)] border-t border-white/40;
+  }
+  
+  .btn-warning {
+    @apply btn bg-amber-500 dark:bg-amber-500/80 text-white shadow-[0_8px_32px_-8px_rgba(245,158,11,0.5)] focus:ring-amber-400 hover:shadow-[0_12px_40px_-8px_rgba(245,158,11,0.7)] border-t border-white/40;
+  }
+  
+  .btn-success {
+    @apply btn bg-emerald-600 dark:bg-emerald-600/80 text-white shadow-[0_8px_32px_-8px_rgba(16,185,129,0.5)] focus:ring-emerald-500 hover:shadow-[0_12px_40px_-8px_rgba(16,185,129,0.7)] border-t border-white/40;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-white/70 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 text-slate-800 dark:text-slate-100 border-white/80 dark:border-white/10 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_-12px_rgba(255,255,255,0.05)] focus:ring-slate-400 border-t border-white/60 dark:border-t-white/20;
+  }
+  
+  /* GLASS CARDS */
+  .card {
+    @apply relative bg-white/70 dark:bg-slate-800/60 backdrop-blur-3xl border border-slate-200/60 dark:border-slate-700/50 rounded-[24px] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500 ease-out;
+  }
+  
+  .card:hover {
+    @apply transform -translate-y-[4px] shadow-[0_24px_50px_-12px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_50px_-12px_rgba(0,0,0,0.6)] border-slate-300/80 dark:border-slate-600/60;
+  }
+  
+  .card::before {
+    @apply content-[''] absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 dark:to-transparent opacity-50 pointer-events-none transition-opacity duration-500;
+  }
+  
+  .card:hover::before {
+    @apply opacity-80 dark:opacity-100;
+  }
+  
+  .card-header {
+    @apply relative z-10 px-6 py-5 border-b border-slate-200/60 dark:border-slate-700/50 bg-white/30 dark:bg-slate-800/40 backdrop-blur-md;
+  }
+  
+  .card-body {
+    @apply relative z-10 px-6 py-5;
+  }
+  
+  /* GLASS FORMS */
+  .form-input {
+    @apply block w-full rounded-[16px] bg-white/50 dark:bg-black/20 border border-white/60 dark:border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] focus:border-indigo-400/50 focus:ring-4 focus:ring-indigo-400/20 dark:focus:border-indigo-500/30 dark:focus:ring-indigo-500/10 sm:text-sm text-slate-900 dark:text-white backdrop-blur-sm transition-all duration-300 placeholder-slate-500 dark:placeholder-slate-500 hover:bg-white/70 dark:hover:bg-black/40;
+  }
+  
+  .form-label {
+    @apply block text-sm font-semibold tracking-wide text-slate-600 dark:text-slate-400 mb-2 ml-1;
+  }
+  
+  /* GLASS BADGES */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border border-white/30 shadow-sm transition-transform hover:scale-105;
+  }
+  
+  .badge-success {
+    @apply badge bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30;
+  }
+  
+  .badge-warning {
+    @apply badge bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30;
+  }
+  
+  .badge-danger {
+    @apply badge bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30;
+  }
+  
+  .badge-info {
+    @apply badge bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30;
+  }
+  
+  /* GLASS SIDEBAR LINKS */
+  .sidebar-link {
+    @apply flex items-center px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-white/40 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all duration-300 border border-transparent hover:border-white/30 dark:hover:border-white/10 hover:shadow-sm;
+  }
+  
+  .sidebar-link.active {
+    @apply bg-white/50 dark:bg-white/20 text-blue-700 dark:text-blue-400 border-white/40 dark:border-white/20 shadow-sm backdrop-blur-md;
+  }
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Animation classes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-fast {
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+
+.weather-card {
+  position: relative;
+  overflow: hidden;
+  color: white;
+  transition: background 0.5s ease;
+}
+
+/* Dynamic Backgrounds */
+.weather-card.sunny {
+  background: linear-gradient(to bottom, #4facfe, #00f2fe);
+}
+
+.weather-card.clouds {
+  background: linear-gradient(to bottom, #757f9a, #d7dde8);
+}
+
+.weather-card.rain {
+  background: linear-gradient(to bottom, #2c3e50, #4ca1af);
+}
+
+.weather-card.storm {
+  background: linear-gradient(to bottom, #141e30, #243b55);
+}
+
+.weather-card.night {
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+}
+
+/* Rain */
+.raindrop {
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background: rgba(255,255,255,0.6);
+  animation: fall linear infinite;
+}
+
+.raindrop:nth-child(n) {
+  left: calc(100% * var(--i));
+}
+
+@keyframes fall {
+  from { transform: translateY(-100px); }
+  to { transform: translateY(600px); }
+}
+
+/* Lightning */
+.lightning {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  animation: flash 6s infinite;
+}
+
+@keyframes flash {
+  0%, 95%, 100% { opacity: 0; }
+  97% { opacity: 0.8; }
+}
+
+/* Sun */
+.sun {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, #ffd700, transparent 70%);
+  border-radius: 50%;
+  animation: glow 3s infinite alternate;
+}
+
+@keyframes glow {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+/* Moon */
+.moon {
+  position: absolute;
+  top: 50px;
+  right: 50px;
+  width: 100px;
+  height: 100px;
+  background: #f4f4f4;
+  border-radius: 50%;
+  box-shadow: -20px 0 0 0 #0f2027 inset;
+}
+
+/* Clouds */
+.moving-clouds {
+  position: absolute;
+  width: 200%;
+  height: 100%;
+  background: url("https://i.ibb.co/VqGkz9p/cloud.png") repeat-x;
+  opacity: 0.3;
+  animation: moveClouds 40s linear infinite;
+}
+
+@keyframes moveClouds {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Wind wave */
+.wind-wave {
+  position: absolute;
+  bottom: 0;
+  width: 200%;
+  height: 60px;
+  background: rgba(255,255,255,0.1);
+  animation: windMove 6s linear infinite;
+}
+
+@keyframes windMove {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+
+/* ================= SUN ================= */
+
+.sun-wrapper {
+  position: absolute;
+  top: 10%;
+  right: 10%;
+}
+
+.sun {
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, #ffd54f, #ff9800);
+  border-radius: 50%;
+  animation: rotateSun 20s linear infinite;
+  opacity: 0.4;
+}
+
+@keyframes rotateSun {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ================= RAIN ================= */
+
+.rain {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+    transparent 90%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  background-size: 2px 20px;
+  animation: rain 0.4s linear infinite;
+}
+
+@keyframes rain {
+  100% {
+    background-position: 0 20px;
+  }
+}
+
+/* ================= CLOUD ================= */
+
+.cloud {
+  position: absolute;
+  background: #ffffff55;
+  border-radius: 50%;
+  width: 220px;
+  height: 70px;
+  animation: moveClouds 60s linear infinite;
+}
+
+.cloud1 {
+  top: 20%;
+  left: -200px;
+}
+
+.cloud2 {
+  top: 50%;
+  left: -300px;
+  animation-duration: 80s;
+}
+
+@keyframes moveClouds {
+  100% {
+    transform: translateX(120vw);
+  }
+}
+
+/* ================= SNOW ================= */
+
+.snow span {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: snowFall 10s linear infinite;
+}
+
+.snow span:nth-child(odd) {
+  animation-duration: 12s;
+}
+
+@keyframes snowFall {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 1;
+  }
+}
+
+/* Real-time Map Animations */
+@keyframes map-ripple {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.disaster-ripple {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disaster-ripple::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: rgba(239, 68, 68, 0.4);
+  border-radius: 50%;
+  animation: map-ripple 2s infinite;
+}
+
+.disaster-ripple-inner {
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+.alert-pulse {
+  animation: pulse 1.5s infinite;
+}
+
+/* Leaflet Overrides */
+.leaflet-control-layers {
+  @apply rounded-xl border-none shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-all !important;
+}
+
+.leaflet-popup-content-wrapper {
+  @apply !rounded-2xl !bg-white/90 dark:!bg-slate-900/90 !backdrop-blur-xl !shadow-2xl !border !border-white/20 dark:!border-white/10 !important;
+}
+
+.leaflet-popup-tip {
+  @apply !bg-white/90 dark:!bg-slate-900/90 !important;
+}
