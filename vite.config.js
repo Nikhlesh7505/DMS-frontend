@@ -11,6 +11,8 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true
       }
-    }
-  }
+    },
+    
+  },
+  base:process.env.VITE_BASE_PATH||"/DMS-frontend",
 })
