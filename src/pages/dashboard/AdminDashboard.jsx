@@ -132,13 +132,13 @@ const AdminDashboard = () => {
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard title="Total Users" value={counts?.totalUsers || 0} icon={UsersIcon} link="/dashboard/users" color="bg-blue-500" />
         <StatCard title="Active Disasters" value={counts?.activeDisasters || 0} icon={ExclamationTriangleIcon} link="/dashboard/disasters" color="bg-red-500" />
         <StatCard title="Active Alerts" value={counts?.activeAlerts || 0} icon={BellAlertIcon} link="/dashboard/alerts" color="bg-amber-500" />
         <StatCard title="Pending Requests" value={counts?.pendingRequests || 0} icon={ClipboardDocumentListIcon} link="/dashboard/emergency" color="bg-green-500" />
+        <StatCard title="Flagged Donations" value={"!"} icon={ExclamationTriangleIcon} link="/dashboard/flagged-donations" color="bg-rose-500" />
       </div>
-
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Active Tasks" value={counts?.activeTasks || 0} icon={WrenchIcon} link="/dashboard/tasks" color="bg-purple-500" />
         <StatCard title="Total Resources" value={counts?.totalResources || 0} icon={TruckIcon} link="/dashboard/resources" color="bg-indigo-500" />

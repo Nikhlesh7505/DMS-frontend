@@ -1,6 +1,7 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
+import { Toaster } from 'react-hot-toast'
 
 // Layouts
 import MainLayout from './layouts/MainLayout'
@@ -17,6 +18,8 @@ import ChatBot from './pages/chatBot/ChatBot'
 import AdminDashboard from './pages/dashboard/AdminDashboard'
 import ResponderDashboard from './pages/dashboard/ResponderDashboard'
 import CitizenDashboard from './pages/dashboard/CitizenDashboard'
+import VolunteerDashboard from './pages/dashboard/VolunteerDashboard'
+import AdminFlaggedDonations from './pages/dashboard/AdminFlaggedDonations'
 
 // Management Pages
 import Disasters from './pages/disasters/Disasters'
@@ -31,6 +34,7 @@ import MyAlerts from './pages/users/MyAlerts'
 import Weather from './pages/weather/Weather'
 import Profile from './pages/profile/Profile'
 import Donation from './pages/donation/Donation'
+import NgoDonations from './pages/donation/NgoDonations'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -83,6 +87,8 @@ const Dashboard = () => {
     case 'ngo':
     case 'rescue_team':
       return <ResponderDashboard />
+    case 'volunteer':
+      return <VolunteerDashboard />
     case 'citizen':
       return <CitizenDashboard />
     default:
@@ -100,66 +106,85 @@ const AlertsPage = () => {
   return <MyAlerts />
 }
 
+const DonationPage = () => {
+  const { user } = useAuth()
+  if (user?.role === 'ngo' || user?.role === 'admin' || user?.role === 'rescue_team') {
+    return <NgoDonations />
+  }
+  if (user?.role === 'volunteer') {
+    return <VolunteerDashboard />
+  }
+  return <Donation />
+}
+
 function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<Landing />} />
-        <Route path="login" element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        } />
-        <Route path="register" element={
-          <PublicRoute>
-            <Register />
-          </PublicRoute>
-        } />
-      </Route>
+    <>
+      <Toaster position="top-right" reverseOrder={false} />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Landing />} />
+          <Route path="login" element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } />
+          <Route path="register" element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          } />
+        </Route>
 
-      {/* Protected Dashboard Routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <DashboardLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<Dashboard />} />
-        
-        {/* Admin Only */}
-        <Route path="users" element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <Users />
+        {/* Protected Dashboard Routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardLayout />
           </ProtectedRoute>
-        } />
-        
-        {/* Admin and Responder */}
-        <Route path="disasters" element={
-          <ProtectedRoute allowedRoles={['admin', 'ngo', 'rescue_team', 'citizen']}>
-            <Disasters />
-          </ProtectedRoute>
-        } />
-        <Route path="disasters/:id" element={
-          <ProtectedRoute allowedRoles={['admin', 'ngo', 'rescue_team', 'citizen']}>
-            <DisasterDetail />
-          </ProtectedRoute>
-        } />
-        
-        {/* All Authenticated */}
-        <Route path="alerts" element={<AlertsPage />} />
-        <Route path="alerts/:id" element={<AlertDetail />} />
-        <Route path="emergency" element={<EmergencyRequests />} />
-        <Route path="resources" element={<Resources />} />
-        <Route path="tasks" element={<RescueTasks />} />
-        <Route path="weather" element={<Weather />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="chatbot" element={<ChatBot />} />
-        <Route path="donation" element={<Donation/>}/>
-      </Route>
+        }>
+          <Route index element={<Dashboard />} />
+          
+          {/* Admin Only */}
+          <Route path="users" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Users />
+            </ProtectedRoute>
+          } />
+          <Route path="flagged-donations" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminFlaggedDonations />
+            </ProtectedRoute>
+          } />
+          
+          {/* Admin and Responder */}
+          <Route path="disasters" element={
+            <ProtectedRoute allowedRoles={['admin', 'ngo', 'rescue_team', 'citizen']}>
+              <Disasters />
+            </ProtectedRoute>
+          } />
+          <Route path="disasters/:id" element={
+            <ProtectedRoute allowedRoles={['admin', 'ngo', 'rescue_team', 'citizen']}>
+              <DisasterDetail />
+            </ProtectedRoute>
+          } />
+          
+          {/* All Authenticated */}
+          <Route path="alerts" element={<AlertsPage />} />
+          <Route path="alerts/:id" element={<AlertDetail />} />
+          <Route path="emergency" element={<EmergencyRequests />} />
+          <Route path="resources" element={<Resources />} />
+          <Route path="tasks" element={<RescueTasks />} />
+          <Route path="weather" element={<Weather />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="chatbot" element={<ChatBot />} />
+          <Route path="donation" element={<DonationPage/>}/>
+        </Route>
 
-      {/* 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   )
 }
 

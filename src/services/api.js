@@ -2,8 +2,8 @@
 
 import axios from 'axios'
 
-// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-const API_URL = import.meta.env.VITE_API_URL || 'https://nikhil-dms-backend.onrender.com/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+// const API_URL = import.meta.env.VITE_API_URL || 'https://nikhil-dms-backend.onrender.com/api'
 
 
 
@@ -40,6 +40,7 @@ api.interceptors.response.use(
 export const authAPI = {
   login:          (email, password) => api.post('/auth/login', { email, password }),
   register:       (data)            => api.post('/auth/register', data),
+  sendOtp:        (data)            => api.post('/auth/send-otp', data),
   getMe:          ()                => api.get('/auth/me'),
   updatePassword: (data)            => api.put('/auth/password', data),
   logout:         ()                => api.post('/auth/logout'),
@@ -57,6 +58,7 @@ export const userAPI = {
   approveUser:          (id, data)     => api.put(`/users/${id}/approve`, data),
   deactivate:           (id)           => api.put(`/users/${id}/deactivate`),
   getAvailableRescueTeams: (params)    => api.get('/users/rescue-teams/available', { params }),
+  getNearbyVolunteers: (params)        => api.get('/users/volunteers/nearby', { params }),
   getByRole:            (role, params) => api.get(`/users/by-role/${role}`, { params }),
   deleteUser:           (id)           => api.delete(`/users/${id}`),
 }
@@ -132,14 +134,22 @@ export const disasterAPI = {
 }
 
 export const donationAPI = {
-  createDonation:       (data)        => API.post('/donations', data),
-  getMyDonations:       (params = {}) => API.get('/donations/my', { params }),
-  getMyDonationById:    (id)          => API.get(`/donations/my/${id}`),
-  cancelMyDonation:     (id)          => API.delete(`/donations/my/${id}`),
-  getAllDonations:       (params = {}) => API.get('/donations/admin', { params }),
-  getDonationById:      (id)          => API.get(`/donations/admin/${id}`),
-  updateDonationStatus: (id, data)    => API.patch(`/donations/admin/${id}/status`, data),
-  deleteDonation:       (id)          => API.delete(`/donations/admin/${id}`),
+  create:           (data)          => api.post('/donations', data),
+  getMy:            (params = {})   => api.get('/donations/my', { params }),
+  getAll:           (params = {})   => api.get('/donations', { params }),
+  getPending:       ()              => api.get('/donations/pending'),
+  getFlagged:       ()              => api.get('/donations', { params: { flagged: true } }),
+  getById:          (id)            => api.get(`/donations/${id}`),
+  update:           (id, data)      => api.put(`/donations/${id}`, data),
+  updateStatus:     (id, status, notes) => api.patch(`/donations/${id}/status`, { status, notes }),
+  accept:           (id)            => api.post(`/donations/${id}/accept`),
+  assignVolunteer:  (id, data)      => api.post(`/donations/${id}/assign-volunteer`, data),
+  cancelAcceptance: (id)            => api.post(`/donations/${id}/cancel-acceptance`),
+  getVolunteerTasks: (params)       => api.get('/donations/volunteer-tasks', { params }),
+  respondToTask:    (id, action, feedback) => api.patch(`/donations/${id}/respond-task`, { action, feedback }),
+  completeTask:     (id)            => api.patch(`/donations/${id}/complete-task`),
+  adminDelete:      (id, feedback)  => api.delete(`/donations/${id}/admin`, { data: { feedback } }),
+  delete:           (id)            => api.delete(`/donations/${id}`),
 }
 // ── Emergency Request API ─────────────────────────────────────────
 export const emergencyAPI = {
@@ -196,6 +206,12 @@ export const dashboardAPI = {
   getCitizen:   () => api.get('/dashboard/citizen'),
   getAnalytics: () => api.get('/dashboard/analytics'),
   getMapData:   () => api.get('/dashboard/map-data'),
+}
+
+export const utilsAPI = {
+  getCountries: () => api.get('/utils/geo/countries'),
+  getStates: (country) => api.post('/utils/geo/states', { country }),
+  getCities: (country, state) => api.post('/utils/geo/cities', { country, state }),
 }
 
 export default api

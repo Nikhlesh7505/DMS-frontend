@@ -236,7 +236,9 @@ import {
   XCircleIcon,
   ClockIcon,
   TrashIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  EyeIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline'
 
 const Users = () => {
@@ -245,6 +247,7 @@ const Users = () => {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [deleteModal, setDeleteModal] = useState({ open: false, user: null })
+  const [detailsModal, setDetailsModal] = useState({ open: false, user: null })
   const [deleting, setDeleting] = useState(false)
 
   const fetchUsers = useCallback(async () => {
@@ -304,7 +307,8 @@ const Users = () => {
       admin: 'bg-danger-100 text-danger-800',
       ngo: 'bg-indigo-500/20 text-indigo-800 dark:text-indigo-200',
       rescue_team: 'bg-warning-100 text-warning-800',
-      citizen: 'bg-success-100 text-success-800'
+      citizen: 'bg-success-100 text-success-800',
+      volunteer: 'bg-indigo-100 text-indigo-800 dark:text-indigo-200'
     }
     return colors[role] || 'bg-white/40 dark:bg-black/20 text-slate-800 dark:text-slate-100'
   }
@@ -380,6 +384,120 @@ const Users = () => {
         </div>
       )}
 
+      {/* ✅ User Details Modal */}
+      {detailsModal.open && detailsModal.user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4">
+            <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+                  <UserIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">User Details</h2>
+              </div>
+              <button onClick={() => setDetailsModal({ open: false, user: null })} className="text-slate-400 hover:text-red-500 transition-colors">
+                <XCircleIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase mb-1">Full Name</p>
+                <p className="font-semibold text-slate-900 dark:text-white">{detailsModal.user.name}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase mb-1">Email</p>
+                <p className="font-semibold text-slate-900 dark:text-white break-all">{detailsModal.user.email}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase mb-1">Phone</p>
+                <p className="font-semibold text-slate-900 dark:text-white">{detailsModal.user.phone || 'Not provided'}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase mb-1">Role</p>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getRoleColor(detailsModal.user.role)}`}>
+                  {detailsModal.user.role.replace('_', ' ')}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase mb-1">Account Status</p>
+                <div className="flex items-center gap-1.5">
+                  {getStatusIcon(detailsModal.user.approvalStatus)}
+                  <span className="text-sm text-slate-700 dark:text-slate-300 capitalize">{detailsModal.user.approvalStatus}</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase mb-1">Joined</p>
+                <p className="font-semibold text-slate-900 dark:text-white">{new Date(detailsModal.user.createdAt).toLocaleDateString()}</p>
+              </div>
+            </div>
+
+            {(detailsModal.user.role === 'ngo' || detailsModal.user.role === 'rescue_team') && detailsModal.user.organization && (
+              <div className="mt-5 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+                <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase mb-3">Organization Info</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Name</p>
+                    <p className="font-semibold text-slate-900 dark:text-white">{detailsModal.user.organization.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Type</p>
+                    <p className="font-semibold text-slate-900 dark:text-white capitalize">{detailsModal.user.organization.type || detailsModal.user.role}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {detailsModal.user.location && (
+              <div className="mt-5 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase mb-3 flex items-center gap-2">
+                  <MapPinIcon className="w-4 h-4" />
+                  Location Details
+                </p>
+                <div className="space-y-4">
+                  {(detailsModal.user.location.address || detailsModal.user.location.city || detailsModal.user.location.state) && (
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">Address / Region</p>
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                        {[detailsModal.user.location.address, detailsModal.user.location.city, detailsModal.user.location.state].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {detailsModal.user.location.coordinates?.latitude && detailsModal.user.location.coordinates?.longitude && (
+                    <div className="flex items-center justify-between pt-2 border-t border-emerald-100 dark:border-emerald-800/20">
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase">Precise Coordinates</p>
+                        <p className="text-xs font-mono text-slate-700 dark:text-slate-300">
+                          {detailsModal.user.location.coordinates.latitude.toFixed(6)}, {detailsModal.user.location.coordinates.longitude.toFixed(6)}
+                        </p>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps?q=${detailsModal.user.location.coordinates.latitude},${detailsModal.user.location.coordinates.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                      >
+                        View on Maps
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setDetailsModal({ open: false, user: null })}
+                className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pending Approvals */}
       {pendingUsers.length > 0 && (
         <div className="card border-l-4 border-l-warning-500">
@@ -429,7 +547,7 @@ const Users = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
-        {['all', 'admin', 'ngo', 'rescue_team', 'citizen'].map((role) => (
+        {['all', 'admin', 'ngo', 'rescue_team', 'citizen', 'volunteer'].map((role) => (
           <button
             key={role}
             onClick={() => setActiveTab(role)}
@@ -458,9 +576,6 @@ const Users = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Location
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Joined
@@ -499,20 +614,25 @@ const Users = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                    {user.location?.city || 'Not set'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
-                  {/* ✅ NEW: Remove button cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => setDeleteModal({ open: true, user })}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-danger-700 bg-danger-50 border border-danger-200 rounded-lg hover:bg-danger-100 transition-colors"
-                    >
-                      <TrashIcon className="h-3.5 w-3.5" />
-                      Remove
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setDetailsModal({ open: true, user })}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                      >
+                        <EyeIcon className="h-3.5 w-3.5" />
+                        Details
+                      </button>
+                      <button
+                        onClick={() => setDeleteModal({ open: true, user })}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-danger-700 bg-danger-50 border border-danger-200 rounded-lg hover:bg-danger-100 transition-colors"
+                      >
+                        <TrashIcon className="h-3.5 w-3.5" />
+                        Remove
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

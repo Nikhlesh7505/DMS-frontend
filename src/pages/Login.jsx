@@ -1,14 +1,21 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
 import { useAuth } from '../contexts/AuthContext'
-import { ShieldCheckIcon, EyeIcon, EyeSlashIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import { loginSchema } from '../utils/validationSchemas'
+import FormField from '../components/common/FormField'
+import { 
+  ShieldCheckIcon, 
+  EyeIcon, 
+  EyeSlashIcon, 
+  ArrowRightOnRectangleIcon,
+  EnvelopeIcon,
+  LockClosedIcon
+} from '@heroicons/react/24/outline'
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,19 +25,16 @@ const Login = () => {
   const navigate = useNavigate()
   const successMessage = location.state?.message || ''
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: yupResolver(loginSchema),
+    mode: 'onBlur'
+  })
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const onSubmit = async (data) => {
     setError('')
     setLoading(true)
 
-    const result = await login(formData.email, formData.password)
+    const result = await login(data.email, data.password)
 
     if (result.success) {
       navigate('/dashboard')
@@ -42,142 +46,124 @@ const Login = () => {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
-      {/* Background is styled in index.css body, but we can add an extra glow here if wanted */}
-      
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-12">
+      {/* Background decoration */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        whileHover={{ y: -5, scale: 1.01 }}
-        transition={{ duration: 0.5, type: 'spring', bounce: 0.3 }}
-        className="card max-w-md w-full relative z-10 p-8 sm:p-10 group"
+        className="card max-w-md w-full relative z-10 p-8 sm:p-12 shadow-2xl backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border border-white/20"
       >
-        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 rounded-[28px] to-purple-500 opacity-0 group-hover:opacity-20 blur-xl transition duration-500"></div>
         <div className="relative space-y-8">
-        <div className="text-center">
-          <motion.div 
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
-            className="flex justify-center"
-          >
-            <div className="bg-white/40 dark:bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/60 dark:border-white/20 shadow-xl">
-              <ShieldCheckIcon className="h-12 w-12 text-blue-600 dark:text-blue-400" />
-            </div>
-          </motion.div>
-
-          <motion.h2 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mt-6 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight"
-          >
-            Welcome Back
-          </motion.h2>
-
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mt-2 text-sm text-slate-600 dark:text-slate-400"
-          >
-            Or{' '}
-            <Link to="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors">
-              create a new account
-            </Link>
-          </motion.p>
-        </div>
-
-        <motion.form 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 space-y-6" 
-          onSubmit={handleSubmit}
-        >
-          <AnimatePresence>
-            {successMessage && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }} 
-                animate={{ opacity: 1, height: 'auto' }} 
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-green-500/20 border border-green-500/30 p-3 rounded-xl backdrop-blur-md overflow-hidden"
-              >
-                <p className="text-green-700 dark:text-green-400 text-sm font-medium">{successMessage}</p>
-              </motion.div>
-            )}
-            {error && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }} 
-                animate={{ opacity: 1, height: 'auto' }} 
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-red-500/20 border border-red-500/30 p-3 rounded-xl backdrop-blur-md overflow-hidden"
-              >
-                <p className="text-red-700 dark:text-red-400 text-sm font-medium">{error}</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="space-y-4">
-            <div>
-              <label className="form-label">Email</label>
-              <input
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-                className="form-input"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div>
-              <label className="form-label">Password</label>
-              <div className="relative">
-                <input
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  required
-                  className="form-input pr-12"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeSlashIcon className="h-5 w-5"/> : <EyeIcon className="h-5 w-5"/>}
-                </button>
+          <div className="text-center">
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              className="flex justify-center"
+            >
+              <div className="bg-indigo-600/10 p-4 rounded-2xl border border-indigo-600/20 shadow-lg">
+                <ShieldCheckIcon className="h-10 w-10 text-indigo-600 dark:text-indigo-400" />
               </div>
-            </div>
+            </motion.div>
+
+            <h2 className="mt-6 text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Welcome Back
+            </h2>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Enter your credentials to access your dashboard
+            </p>
           </div>
 
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <button
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <AnimatePresence mode="wait">
+              {successMessage && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: 'auto' }} 
+                  className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl"
+                >
+                  <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium text-center">{successMessage}</p>
+                </motion.div>
+              )}
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: 'auto' }} 
+                  className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl"
+                >
+                  <p className="text-red-600 dark:text-red-400 text-sm font-medium text-center">{error}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="space-y-4">
+              <FormField
+                label="Email"
+                name="email"
+                type="email"
+                register={register}
+                error={errors.email}
+                placeholder="you@example.com"
+                icon={EnvelopeIcon}
+                required
+              />
+
+              <div className="space-y-2">
+                <label className="form-label" htmlFor="password">Password</label>
+                <div className="relative group">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                    <LockClosedIcon className="w-5 h-5" />
+                  </div>
+                  <input
+                    {...register('password')}
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className={`form-input w-full pl-10 pr-12 ${errors.password ? 'border-red-500' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeSlashIcon className="h-5 w-5"/> : <EyeIcon className="h-5 w-5"/>}
+                  </button>
+                </div>
+                {errors.password && <p className="text-xs text-red-500 font-medium mt-1">{errors.password.message}</p>}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end">
+              <Link to="/forgot-password" size="sm" className="text-xs font-bold text-indigo-600 hover:text-indigo-500 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full py-3"
+              className="btn btn-primary w-full py-4 rounded-xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
             >
               {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </span>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                <span className="flex items-center justify-center gap-2 w-full">
-                  Sign in
+                <>
+                  Sign In
                   <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                </span>
+                </>
               )}
-            </button>
-          </motion.div>
-        </motion.form>
+            </motion.button>
+          </form>
+
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+            Don't have an account? {' '}
+            <Link to="/register" className="text-indigo-600 font-bold hover:underline">Create Account</Link>
+          </p>
         </div>
       </motion.div>
     </div>

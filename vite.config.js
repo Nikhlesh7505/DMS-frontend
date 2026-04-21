@@ -8,12 +8,12 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        // target: 'http://localhost:5000',
-        target:'https://nikhil-dms-frontend.vercel.app',
+        target: 'http://localhost:5000',
+        // target:'https://nikhil-dms-frontend.vercel.app',
         changeOrigin: true
       }
     },
     
   },
-  base:process.env.VITE_BASE_PATH||"/DMS-frontend",
+  // base:process.env.VITE_BASE_PATH||"/DMS-frontend",
 })

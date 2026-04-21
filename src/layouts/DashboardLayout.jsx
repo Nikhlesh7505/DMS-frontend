@@ -21,6 +21,7 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   SparklesIcon,
+  HeartIcon,
 } from '@heroicons/react/24/outline'
 
 const containerVariants = {
@@ -202,8 +203,7 @@ const DashboardLayout = () => {
       return [
         ...baseNavigation,
         { name: 'Disasters', href: '/dashboard/disasters', icon: ExclamationTriangleIcon },
-        // { name: 'Emergency Requests', href: '/dashboard/emergency', icon: ClipboardDocumentListIcon },
-        // { name: 'Resources', href: '/dashboard/resources', icon: TruckIcon },
+        { name: 'Donations', href: '/dashboard/donation', icon: HeartIcon },
         { name: 'Live Map', href: '/dashboard/tasks', icon: WrenchIcon },
         { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
         { name: 'Weather', href: '/dashboard/weather', icon: CloudIcon },
@@ -216,7 +216,7 @@ const DashboardLayout = () => {
         ...baseNavigation,
         { name: 'Disasters', href: '/dashboard/disasters', icon: ExclamationTriangleIcon },
         { name: 'Emergency Requests', href: '/dashboard/emergency', icon: ClipboardDocumentListIcon },
-        // { name: 'Resources', href: '/dashboard/resources', icon: TruckIcon },
+        { name: 'Donations', href: '/dashboard/donation', icon: HeartIcon },
         { name: 'Live Map', href: '/dashboard/tasks', icon: WrenchIcon },
         { name: 'Weather', href: '/dashboard/weather', icon: CloudIcon },
       ]
@@ -226,7 +226,7 @@ const DashboardLayout = () => {
       ...baseNavigation,
       { name: 'Disasters', href: '/dashboard/disasters', icon: ExclamationTriangleIcon },
       { name: 'My Requests', href: '/dashboard/emergency', icon: ClipboardDocumentListIcon },
-       { name: 'Donation', href: '/dashboard/donation', icon: ClipboardDocumentListIcon },
+      { name: 'Donations', href: '/dashboard/donation', icon: HeartIcon },
       { name: 'Weather', href: '/dashboard/weather', icon: CloudIcon },
     ]
   }
