@@ -17,10 +17,39 @@ const phoneRule = Yup.string()
   .matches(/^(\+91[\-\s]?)?[6789]\d{9}$/, 'Invalid Indian phone number')
   .required('Phone number is required');
 
+const usernameRule = Yup.string()
+  .matches(/^(?=.{3,30}$)[a-z0-9](?:[a-z0-9._]*[a-z0-9])?$/, 'Username must be 3-30 characters and use only lowercase letters, numbers, dots, or underscores')
+  .required('Username is required');
+
 // Auth Schemas
 export const loginSchema = Yup.object().shape({
   email: emailRule,
   password: Yup.string().required('Password is required'),
+});
+
+export const forgotPasswordEmailSchema = Yup.object().shape({
+  email: emailRule,
+});
+
+export const forgotPasswordResetSchema = Yup.object().shape({
+  email: emailRule,
+  otp: Yup.string()
+    .matches(/^\d{6}$/, 'OTP must be exactly 6 digits')
+    .required('OTP is required'),
+  password: passwordRule,
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password'), null], 'Passwords must match')
+    .required('Please confirm your password'),
+});
+
+export const recoverEmailByPhoneSchema = Yup.object().shape({
+  phone: phoneRule,
+});
+
+export const recoverEmailByUsernameSchema = Yup.object().shape({
+  username: Yup.string()
+    .trim()
+    .required('Username is required'),
 });
 
 export const registerSchema = Yup.object().shape({
@@ -28,6 +57,7 @@ export const registerSchema = Yup.object().shape({
     .min(2, 'Name is too short')
     .max(100, 'Name is too long')
     .required('Full name is required'),
+  username: usernameRule,
   email: emailRule,
   phone: phoneRule,
   role: Yup.string()

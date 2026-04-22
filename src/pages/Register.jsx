@@ -199,6 +199,7 @@ const Register = () => {
     const formData = watch()
     const userData = {
       name: formData.name,
+      username: formData.username,
       email: formData.email,
       password: formData.password,
       phone: formData.phone,
@@ -290,6 +291,16 @@ const Register = () => {
                     register={register}
                     error={errors.name}
                     placeholder="John Doe"
+                    icon={UserIcon}
+                    required
+                  />
+
+                  <FormField
+                    label="Username"
+                    name="username"
+                    register={register}
+                    error={errors.username}
+                    placeholder="john_doe"
                     icon={UserIcon}
                     required
                   />

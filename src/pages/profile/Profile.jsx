@@ -12,6 +12,8 @@ import {
   CheckCircleIcon,
   PencilIcon,
   LockClosedIcon,
+  EyeIcon,
+  EyeSlashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 
@@ -26,6 +28,7 @@ const Profile = () => {
 
   const [formData, setFormData] = useState({
     name:    user?.name             || '',
+    username:user?.username         || '',
     phone:   user?.phone            || '',
     address: user?.location?.address|| '',
     city:    user?.location?.city   || '',
@@ -37,13 +40,22 @@ const Profile = () => {
     newPassword:     '',
     confirmPassword: '',
   })
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  })
 
   const [passError, setPassError] = useState('')
+
+  const editInputClassName =
+    'w-full rounded-lg px-3 py-2 text-sm bg-white text-slate-900 placeholder:text-slate-400 border border-slate-200/70 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 dark:bg-slate-900/70 dark:text-slate-100 dark:placeholder:text-slate-500 dark:border-slate-600/70 dark:focus:border-blue-400'
 
   // ── Reset form to current user values ──────────────────────────
   const resetForm = () => {
     setFormData({
       name:    user?.name             || '',
+      username:user?.username         || '',
       phone:   user?.phone            || '',
       address: user?.location?.address|| '',
       city:    user?.location?.city   || '',
@@ -62,6 +74,7 @@ const Profile = () => {
     try {
       const res = await userAPI.updateProfile({
         name:  formData.name,
+        username: formData.username,
         phone: formData.phone,
         location: {
           address: formData.address,
@@ -109,11 +122,19 @@ const Profile = () => {
       setMessage({ type: 'success', text: 'Password changed successfully.' })
       setChangingPass(false)
       setPassData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setShowPasswords({ current: false, next: false, confirm: false })
     } catch (err) {
       setPassError(err?.response?.data?.message || 'Failed to change password.')
     } finally {
       setPassLoading(false)
     }
+  }
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }))
   }
 
   // ── Role badge ──────────────────────────────────────────────────
@@ -131,6 +152,8 @@ const Profile = () => {
     pending:  'bg-yellow-100 text-yellow-700',
     rejected: 'bg-red-100 text-red-700',
   }
+  const isAccountActive = user?.isActive !== false
+  const isAccountVerified = Boolean(user?.isVerified || user?.approvalStatus === 'approved')
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -179,6 +202,9 @@ const Profile = () => {
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">{user?.name}</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
+              {user?.username && (
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">@{user.username}</p>
+              )}
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {/* Role badge */}
                 <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${
@@ -225,7 +251,21 @@ const Profile = () => {
                     name="name"
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full border border-slate-200/60 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                    className={editInputClassName}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={e => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
+                    className={editInputClassName}
+                    placeholder="john_doe"
                     required
                   />
                 </div>
@@ -238,7 +278,7 @@ const Profile = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full border border-slate-200/60 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                    className={editInputClassName}
                   />
                 </div>
               </div>
@@ -252,7 +292,7 @@ const Profile = () => {
                   name="address"
                   value={formData.address}
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full border border-slate-200/60 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                  className={editInputClassName}
                   placeholder="Street address"
                 />
               </div>
@@ -267,7 +307,7 @@ const Profile = () => {
                     name="city"
                     value={formData.city}
                     onChange={e => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full border border-slate-200/60 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                    className={editInputClassName}
                     placeholder="e.g. Mumbai"
                   />
                 </div>
@@ -280,7 +320,7 @@ const Profile = () => {
                     name="state"
                     value={formData.state}
                     onChange={e => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full border border-slate-200/60 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                    className={editInputClassName}
                     placeholder="e.g. Maharashtra"
                   />
                 </div>
@@ -317,6 +357,16 @@ const Profile = () => {
                 <div>
                   <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">Email</p>
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{user?.email}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <UserCircleIcon className="h-5 w-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">Username</p>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                    {user?.username ? `@${user.username}` : <span className="text-slate-400 dark:text-slate-500 italic">Not set</span>}
+                  </p>
                 </div>
               </div>
 
@@ -372,9 +422,9 @@ const Profile = () => {
             <div>
               <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1">Account Status</p>
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${user?.isActive ? 'bg-green-500' : 'bg-red-400'}`} />
+                <div className={`w-2 h-2 rounded-full ${isAccountActive ? 'bg-green-500' : 'bg-red-400'}`} />
                 <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                  {user?.isActive ? 'Active' : 'Inactive'}
+                  {isAccountActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
             </div>
@@ -382,13 +432,13 @@ const Profile = () => {
             <div>
               <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1">Email Verified</p>
               <div className="flex items-center gap-2">
-                {user?.isVerified ? (
+                {isAccountVerified ? (
                   <>
                     <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                    <span className="text-sm font-medium text-green-700">Verified</span>
+                    <span className="text-sm font-medium text-green-700 dark:text-green-400">Verified</span>
                   </>
                 ) : (
-                  <span className="text-sm font-medium text-yellow-600">Pending Verification</span>
+                  <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Pending Verification</span>
                 )}
               </div>
             </div>
@@ -429,7 +479,11 @@ const Profile = () => {
           </h3>
           {!changingPass && (
             <button
-              onClick={() => { setChangingPass(true); setPassError('') }}
+              onClick={() => {
+                setChangingPass(true)
+                setPassError('')
+                setShowPasswords({ current: false, next: false, confirm: false })
+              }}
               className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
             >
               Change Password
@@ -443,39 +497,81 @@ const Profile = () => {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                 Current Password
               </label>
-              <input
-                type="password"
-                value={passData.currentPassword}
-                onChange={e => setPassData({ ...passData, currentPassword: e.target.value })}
-                className="w-full border text-black border-slate-200/60 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                required 
-              />
+              <div className="relative">
+                <input
+                  type={showPasswords.current ? 'text' : 'password'}
+                  value={passData.currentPassword}
+                  onChange={e => setPassData({ ...passData, currentPassword: e.target.value })}
+                  className={`${editInputClassName} pr-10`}
+                  required 
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('current')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  aria-label={showPasswords.current ? 'Hide current password' : 'Show current password'}
+                >
+                  {showPasswords.current ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                   New Password
                 </label>
-                <input
-                  type="password"
-                  value={passData.newPassword}
-                  onChange={e => setPassData({ ...passData, newPassword: e.target.value })}
-                  className="w-full border  text-black border-slate-200/60 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                  required
-                  minLength={6}
-                />
+                <div className="relative">
+                  <input
+                    type={showPasswords.next ? 'text' : 'password'}
+                    value={passData.newPassword}
+                    onChange={e => setPassData({ ...passData, newPassword: e.target.value })}
+                    className={`${editInputClassName} pr-10`}
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('next')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    aria-label={showPasswords.next ? 'Hide new password' : 'Show new password'}
+                  >
+                    {showPasswords.next ? (
+                      <EyeSlashIcon className="h-5 w-5" />
+                    ) : (
+                      <EyeIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                   Confirm New Password
                 </label>
-                <input
-                  type="password"
-                  value={passData.confirmPassword}
-                  onChange={e => setPassData({ ...passData, confirmPassword: e.target.value })}
-                  className="w-full border  text-black border-slate-200/60 dark:border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPasswords.confirm ? 'text' : 'password'}
+                    value={passData.confirmPassword}
+                    onChange={e => setPassData({ ...passData, confirmPassword: e.target.value })}
+                    className={`${editInputClassName} pr-10`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('confirm')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    aria-label={showPasswords.confirm ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    {showPasswords.confirm ? (
+                      <EyeSlashIcon className="h-5 w-5" />
+                    ) : (
+                      <EyeIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -488,7 +584,11 @@ const Profile = () => {
             <div className="flex justify-end gap-3 pt-2 border-t border-slate-200/40 dark:border-slate-700/40">
               <button
                 type="button"
-                onClick={() => { setChangingPass(false); setPassError('') }}
+                onClick={() => {
+                  setChangingPass(false)
+                  setPassError('')
+                  setShowPasswords({ current: false, next: false, confirm: false })
+                }}
                 className="px-4 py-2 border border-slate-200/60 dark:border-slate-700/50 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-white/30 dark:bg-black/10"
               >
                 Cancel

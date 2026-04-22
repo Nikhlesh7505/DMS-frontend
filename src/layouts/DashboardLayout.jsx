@@ -222,6 +222,14 @@ const DashboardLayout = () => {
       ]
     }
 
+    if (user?.role === 'volunteer') {
+      return [
+        ...baseNavigation,
+        { name: 'Donations', href: '/dashboard/donation', icon: HeartIcon },
+        { name: 'Weather', href: '/dashboard/weather', icon: CloudIcon },
+      ]
+    }
+
     return [
       ...baseNavigation,
       { name: 'Disasters', href: '/dashboard/disasters', icon: ExclamationTriangleIcon },

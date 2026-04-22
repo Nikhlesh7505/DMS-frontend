@@ -10,6 +10,7 @@ import DashboardLayout from './layouts/DashboardLayout'
 // Pages
 import Landing from './pages/Landing'
 import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword'
 import Register from './pages/Register'
 import NotFound from './pages/NotFound'
 import ChatBot from './pages/chatBot/ChatBot'
@@ -133,6 +134,11 @@ function App() {
           <Route path="register" element={
             <PublicRoute>
               <Register />
+            </PublicRoute>
+          } />
+          <Route path="forgot-password" element={
+            <PublicRoute>
+              <ForgotPassword />
             </PublicRoute>
           } />
         </Route>
