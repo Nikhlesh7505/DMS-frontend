@@ -45,6 +45,22 @@ export const AuthProvider = ({ children }) => {
     checkAuth()
   }, [token])
 
+  const normalizeAuthError = (error, fallbackMessage) => {
+    const backendErrors = error.response?.data?.errors || []
+    const fieldErrors = backendErrors.reduce((accumulator, item) => {
+      if (item?.field && item?.message && !accumulator[item.field]) {
+        accumulator[item.field] = item.message
+      }
+      return accumulator
+    }, {})
+
+    return {
+      success: false,
+      message: backendErrors[0]?.message || error.response?.data?.message || fallbackMessage,
+      fieldErrors
+    }
+  }
+
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password })
@@ -57,13 +73,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true }
     } catch (error) {
-      const backendMessage = error.response?.data?.message
-      const validationMessage = error.response?.data?.errors?.[0]?.message
-
-      return {
-        success: false,
-        message: validationMessage || backendMessage || 'Login failed'
-      }
+      return normalizeAuthError(error, 'Login failed')
     }
   }
 
@@ -82,10 +92,7 @@ export const AuthProvider = ({ children }) => {
         message: response.data.message || 'Registration successful. Please log in to continue.'
       }
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Registration failed'
-      }
+      return normalizeAuthError(error, 'Registration failed')
     }
   }
 

@@ -109,7 +109,10 @@ const AlertsPage = () => {
 
 const DonationPage = () => {
   const { user } = useAuth()
-  if (user?.role === 'ngo' || user?.role === 'admin' || user?.role === 'rescue_team') {
+  if (user?.role === 'admin') {
+    return <AdminFlaggedDonations />
+  }
+  if (user?.role === 'ngo' || user?.role === 'rescue_team') {
     return <NgoDonations />
   }
   if (user?.role === 'volunteer') {

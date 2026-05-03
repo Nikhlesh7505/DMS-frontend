@@ -233,7 +233,8 @@ const DashboardLayout = () => {
     return [
       ...baseNavigation,
       { name: 'Disasters', href: '/dashboard/disasters', icon: ExclamationTriangleIcon },
-      { name: 'My Requests', href: '/dashboard/emergency', icon: ClipboardDocumentListIcon },
+      { name: 'Emergency Request', href: '/dashboard/emergency?tab=form', icon: ExclamationTriangleIcon },
+      { name: 'My Requests', href: '/dashboard/emergency?tab=history', icon: ClipboardDocumentListIcon },
       { name: 'Donations', href: '/dashboard/donation', icon: HeartIcon },
       { name: 'Weather', href: '/dashboard/weather', icon: CloudIcon },
     ]

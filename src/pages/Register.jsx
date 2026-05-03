@@ -19,7 +19,8 @@ import {
   KeyIcon,
   CheckCircleIcon,
   MapPinIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { authAPI } from '../services/api'
 
@@ -77,7 +78,7 @@ const PasswordStrength = ({ password }) => {
 const Register = () => {
   const [step, setStep] = useState(1) // 1: Details, 2: OTP
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [serverOtp, setServerOtp] = useState('123456') // Mock server OTP
@@ -92,7 +93,15 @@ const Register = () => {
     coordinates: { latitude: null, longitude: null }
   })
 
-  const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    setError: setFormError,
+    clearErrors,
+    formState: { errors }
+  } = useForm({
     resolver: yupResolver(registerSchema),
     defaultValues: {
       role: 'citizen',
@@ -105,10 +114,21 @@ const Register = () => {
     }
   })
 
+  const authFieldMap = {
+    'organization.name': 'organizationName'
+  }
+
+  const applyServerFieldErrors = (fieldErrors = {}) => {
+    Object.entries(fieldErrors).forEach(([field, message]) => {
+      const targetField = authFieldMap[field] || field
+      setFormError(targetField, { type: 'server', message })
+    })
+  }
+
   const handleGetLocation = () => {
     setLocating(true)
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser')
+      setServerError('Geolocation is not supported by your browser')
       setLocating(false)
       return
     }
@@ -125,7 +145,7 @@ const Register = () => {
         setLocating(false)
       },
       (error) => {
-        setError('Location access denied. Please enter details manually.')
+        setServerError('Location access denied. Please enter details manually.')
         setLocating(false)
       },
       { enableHighAccuracy: true }
@@ -138,7 +158,8 @@ const Register = () => {
   const lng = watch('location.coordinates.longitude')
 
   const onFirstStepSubmit = async (data) => {
-    setError('')
+    setServerError('')
+    clearErrors()
     
     // Generate a random 6-digit OTP
     const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString()
@@ -147,10 +168,16 @@ const Register = () => {
     try {
       setLoading(true)
       // Call our new backend endpoint to email the candidate OTP
-      await authAPI.sendOtp({ email: data.email, otp: generatedOtp, name: data.name })
+      await authAPI.sendOtp({ 
+        email: data.email, 
+        otp: generatedOtp, 
+        name: data.name,
+        phone: data.phone,
+        username: data.username
+      })
       setStep(2)
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to send OTP to your email. Please try again.')
+      setServerError(err?.response?.data?.message || 'Failed to send OTP to your email. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -163,7 +190,7 @@ const Register = () => {
       await authAPI.sendOtp({ email: data.email, otp: serverOtp, name: data.name })
       // Notice: If using real email, could alert "Email Sent!"
     } catch (err) {
-      setError('Failed to resend OTP.')
+      setServerError('Failed to resend OTP.')
     }
   }
 
@@ -183,18 +210,19 @@ const Register = () => {
   const handleFinalSubmit = async () => {
     const otpValue = otp.join('')
     if (otpValue.length < 6) {
-      setError('Please enter the full 6-digit verification code')
+      setServerError('Please enter the full 6-digit verification code')
       return
     }
 
     // Simulate OTP verification logic
     if (otpValue !== serverOtp) {
-      setError(`Invalid verification code. Please check the alert we sent you.`)
+      setServerError('Invalid verification code. Please check the code we sent you.')
       return
     }
 
     setLoading(true)
-    setError('')
+    setServerError('')
+    clearErrors()
 
     const formData = watch()
     const userData = {
@@ -228,7 +256,8 @@ const Register = () => {
         })
       }, 5000)
     } else {
-      setError(result.message)
+      applyServerFieldErrors(result.fieldErrors)
+      setServerError(result.message)
       setStep(1) // Back to first step on error
     }
     
@@ -278,10 +307,17 @@ const Register = () => {
                 onSubmit={handleSubmit(onFirstStepSubmit)}
                 className="space-y-5"
               >
-                {error && (
-                  <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl">
-                    <p className="text-red-600 dark:text-red-400 text-xs font-bold">{error}</p>
-                  </div>
+                {serverError && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-800/50 p-4 rounded-2xl flex items-center gap-3 shadow-lg shadow-red-500/5"
+                  >
+                    <div className="flex-shrink-0 bg-red-100 dark:bg-red-800/50 p-2 rounded-xl">
+                      <ExclamationTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <p className="text-red-800 dark:text-red-200 text-xs font-bold tracking-tight">{serverError}</p>
+                  </motion.div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -484,10 +520,17 @@ const Register = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-8"
               >
-                {error && (
-                  <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl">
-                    <p className="text-red-600 dark:text-red-400 text-xs font-bold text-center">{error}</p>
-                  </div>
+                {serverError && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-800/50 p-4 rounded-2xl flex items-center gap-3 shadow-lg shadow-red-500/5"
+                  >
+                    <div className="flex-shrink-0 bg-red-100 dark:bg-red-800/50 p-2 rounded-xl">
+                      <ExclamationTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <p className="text-red-800 dark:text-red-200 text-xs font-bold tracking-tight text-center flex-1">{serverError}</p>
+                  </motion.div>
                 )}
 
                 <div className="flex justify-center gap-3">

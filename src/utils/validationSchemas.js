@@ -23,7 +23,7 @@ const usernameRule = Yup.string()
 
 // Auth Schemas
 export const loginSchema = Yup.object().shape({
-  email: emailRule,
+  email: Yup.string().required('Email, Username or Phone is required'),
   password: Yup.string().required('Password is required'),
 });
 

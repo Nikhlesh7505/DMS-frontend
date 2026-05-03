@@ -12,12 +12,13 @@ import {
   EyeSlashIcon, 
   ArrowRightOnRectangleIcon,
   EnvelopeIcon,
-  LockClosedIcon
+  LockClosedIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const { login } = useAuth()
@@ -25,13 +26,20 @@ const Login = () => {
   const navigate = useNavigate()
   const successMessage = location.state?.message || ''
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    setError: setFormError,
+    clearErrors,
+    formState: { errors }
+  } = useForm({
     resolver: yupResolver(loginSchema),
     mode: 'onBlur'
   })
 
   const onSubmit = async (data) => {
-    setError('')
+    setServerError('')
+    clearErrors()
     setLoading(true)
 
     const result = await login(data.email, data.password)
@@ -39,7 +47,10 @@ const Login = () => {
     if (result.success) {
       navigate('/dashboard')
     } else {
-      setError(result.message)
+      Object.entries(result.fieldErrors || {}).forEach(([field, message]) => {
+        setFormError(field, { type: 'server', message })
+      })
+      setServerError(result.message)
     }
 
     setLoading(false)
@@ -88,25 +99,28 @@ const Login = () => {
                   <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium text-center">{successMessage}</p>
                 </motion.div>
               )}
-              {error && (
+              {serverError && (
                 <motion.div 
-                  initial={{ opacity: 0, height: 0 }} 
-                  animate={{ opacity: 1, height: 'auto' }} 
-                  className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }} 
+                  animate={{ opacity: 1, y: 0, scale: 1 }} 
+                  className="bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-800/50 p-4 rounded-2xl flex items-center gap-3 shadow-xl shadow-red-500/10"
                 >
-                  <p className="text-red-600 dark:text-red-400 text-sm font-medium text-center">{error}</p>
+                  <div className="flex-shrink-0 bg-red-100 dark:bg-red-800/50 p-2 rounded-xl">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <p className="text-red-800 dark:text-red-200 text-sm font-bold tracking-tight">{serverError}</p>
                 </motion.div>
               )}
             </AnimatePresence>
 
             <div className="space-y-4">
               <FormField
-                label="Email"
+                label="Email, Username or Phone"
                 name="email"
-                type="email"
+                type="text"
                 register={register}
                 error={errors.email}
-                placeholder="you@example.com"
+                placeholder="Email, username or phone"
                 icon={EnvelopeIcon}
                 required
               />

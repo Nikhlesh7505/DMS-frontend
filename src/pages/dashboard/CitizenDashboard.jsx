@@ -1,451 +1,258 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useForm } from 'react-hook-form'
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BellAlertIcon,
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
   CloudIcon,
-  HomeModernIcon,
   PlusCircleIcon,
   MapPinIcon,
   PhoneIcon,
-  ShieldCheckIcon,
-  MapIcon
-} from '@heroicons/react/24/outline'
-import { dashboardAPI, emergencyAPI } from '../../services/api'
-import { useGeolocation } from '../../hooks/useGeolocation'
-import { emergencyRequestSchema } from '../../utils/validationSchemas'
-import FormField from '../../components/common/FormField'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } }
-}
+  ChevronRightIcon,
+  ArrowRightIcon,
+} from "@heroicons/react/24/outline";
+import { dashboardAPI, emergencyAPI } from "../../services/api";
 
 const CitizenDashboard = () => {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [requestError, setRequestError] = useState('')
-  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false)
-  const [showRequestForm, setShowRequestForm] = useState(false)
-  const [isLocationCaptured, setIsLocationCaptured] = useState(false)
-
-  const { location, error: geoError, loading: geoLoading, getLocation } = useGeolocation()
-
-  const { register, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm({
-    defaultValues: {
-      type: 'medical_emergency',
-      peopleAffected: 1,
-      citizenInfo: { alternativeContact: '' },
-      location: {
-        address: '',
-        city: '',
-        state: '',
-        landmark: '',
-        coordinates: { latitude: null, longitude: null }
-      },
-      specialRequirements: {
-        medical: { hasInjuries: false, injuryDetails: '', needsAmbulance: false },
-        accessibility: { hasMobilityIssues: false, details: '' },
-        language: { preferred: 'en', needsTranslator: false }
-      }
-    }
-  })
-
-  const formValues = watch()
-  const hasInjuries = watch('specialRequirements.medical.hasInjuries')
-  const hasMobilityIssues = watch('specialRequirements.accessibility.hasMobilityIssues')
-
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      const response = await dashboardAPI.getCitizen()
-      setData(response.data.data)
-      setError('')
-    } catch (err) {
-      setError('Failed to load dashboard data')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchDashboardData()
-    const intervalId = window.setInterval(fetchDashboardData, 60000)
-    return () => window.clearInterval(intervalId)
-  }, [fetchDashboardData])
+    fetchDashboardData();
+  }, []);
 
-  useEffect(() => {
-    if (location.latitude && location.longitude) {
-      setValue('location.coordinates.latitude', location.latitude)
-      setValue('location.coordinates.longitude', location.longitude)
-      setIsLocationCaptured(true)
-    }
-  }, [location, setValue])
-
-  const onSubmitRequest = async (data) => {
-    setIsSubmittingRequest(true)
-    setRequestError('')
-
+  const fetchDashboardData = async () => {
     try {
-      // Structure payload for backend
-      const payload = {
-        ...data,
-        type: data.type,
-        location: {
-          ...data.location,
-          coordinates: (data.location?.coordinates?.latitude && data.location?.coordinates?.longitude) 
-            ? {
-                latitude: parseFloat(data.location.coordinates.latitude),
-                longitude: parseFloat(data.location.coordinates.longitude)
-              }
-            : undefined
-        }
-      }
-
-      await emergencyAPI.create(payload)
-      setShowRequestForm(false)
-      reset()
-      setIsLocationCaptured(false)
-      await fetchDashboardData()
+      const response = await dashboardAPI.getCitizen();
+      setData(response.data.data);
     } catch (err) {
-      setRequestError(err.response?.data?.message || 'Failed to submit emergency request')
-      console.error('Failed to create request:', err)
+      setError("Failed to load dashboard data");
+      console.error(err);
     } finally {
-      setIsSubmittingRequest(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4 backdrop-blur-md">
-        <p className="text-red-700 dark:text-red-400 font-semibold">{error}</p>
-      </motion.div>
-    )
+      <div className="rounded-md bg-danger-50 p-4">
+        <p className="text-danger-700">{error}</p>
+      </div>
+    );
   }
 
-  const { requests, alerts, disasters, weather, riskStatus, notifications, nearbyShelters } = data || {}
-  const overallRisk = riskStatus?.overallRisk || 'SAFE'
-  
-  const riskColor = {
-    'SAFE': 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400',
-    'WATCH': 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400',
-    'WARNING': 'bg-orange-500/10 border-orange-500/20 text-orange-700 dark:text-orange-400',
-    'DANGER': 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400'
-  }[overallRisk] || 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+  const { requests, alerts, disasters, weather, riskStatus } = data || {};
+
+  // Get overall risk level
+  const overallRisk = riskStatus?.overallRisk || "SAFE";
+  const riskColor =
+    {
+      SAFE: "bg-success-500",
+      WATCH: "bg-warning-500",
+      WARNING: "bg-orange-500",
+      DANGER: "bg-danger-500",
+    }[overallRisk] || "bg-success-500";
 
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="space-y-6"
-    >
-      <motion.div variants={itemVariants} className="flex justify-between items-start">
+    <div className="min-h-screen space-y-8 pb-10">
+      {/* Header Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+      >
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Citizen Portal</h1>
-          <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
-            Real-time status and emergency coordination
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+            My Dashboard
+          </h1>
+          <p className="mt-2 text-slate-600 dark:text-slate-400 font-medium">
+            Stay informed and protected with real-time updates.
           </p>
         </div>
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            setShowRequestForm(!showRequestForm)
-            setRequestError('')
-            if (!showRequestForm) getLocation()
-          }}
-          className={`btn ${showRequestForm ? 'btn-secondary' : 'btn-danger shadow-lg shadow-red-500/20'} flex items-center gap-2`}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate("/dashboard/emergency?tab=form")}
+          className="group relative inline-flex items-center gap-2 rounded-2xl bg-red-600 px-6 py-3.5 text-sm font-bold text-white shadow-xl shadow-red-600/20 transition-all hover:bg-red-500 hover:shadow-red-600/30"
         >
-          {showRequestForm ? 'Cancel Request' : (
-            <>
-              <PlusCircleIcon className="h-5 w-5" />
-              Emergency Request
-            </>
-          )}
+          <PlusCircleIcon className="h-5 w-5 transition-transform group-hover:rotate-90" />
+          Emergency Request
         </motion.button>
       </motion.div>
 
-      <motion.div 
-        variants={itemVariants}
-        className={`rounded-2xl p-4 shadow-xl backdrop-blur-xl border ${riskColor}`}
-      >
-        <div className="flex items-center gap-4">
-          <div className={`p-2 rounded-xl backdrop-blur-sm border ${riskColor.replace('bg-', 'border-').replace('/10', '/30')}`}>
-            <BellAlertIcon className="h-8 w-8" />
-          </div>
-          <div>
-            <p className="font-extrabold text-lg tracking-wide uppercase">Risk Level: {overallRisk}</p>
-            <p className="text-sm font-medium opacity-90">
-              {overallRisk === 'SAFE' 
-                ? 'No immediate threats detected. Stay vigilant.' :
-                overallRisk === 'WATCH'
-                ? 'Monitor local news and weather reports.' :
-                overallRisk === 'WARNING'
-                ? 'Prepare for possible evacuation or shelter.' :
-                'Take immediate action. Follow emergency services instructions.'}
-            </p>
-          </div>
-        </div>
-      </motion.div>
-
-      <AnimatePresence>
-        {showRequestForm && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
+      {/* Stats Quick View (Replacing Banner with more useful info if needed, or just skipping) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2  gap-4">
+        {[
+          // {
+          //   label: "Risk Level",
+          //   value: overallRisk,
+          //   color:
+          //     overallRisk === "SAFE" ? "text-emerald-600" : "text-orange-600",
+          //   icon: BellAlertIcon,
+          // },
+          {
+            label: "Active Alerts",
+            value: alerts?.length || 0,
+            color: "text-blue-600",
+            icon: BellAlertIcon,
+          },
+          {
+            label: "My Requests",
+            value: requests?.length || 0,
+            color: "text-purple-600",
+            icon: ClipboardDocumentListIcon,
+          },
+          // {
+          //   label: "Disasters Near",
+          //   value: disasters?.length || 0,
+          //   color: "text-red-600",
+          //   icon: ExclamationTriangleIcon,
+          // },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="card relative z-20 shadow-2xl overflow-hidden border-red-500/20"
+            transition={{ delay: i * 0.1 }}
+            className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/50"
           >
-            <div className="bg-gradient-to-r from-red-600 to-red-500 p-6 text-white">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <ExclamationTriangleIcon className="h-6 w-6" />
-                New Emergency Request
-              </h3>
-              <p className="text-red-100 text-sm mt-1 opacity-90 font-medium">Please provide accurate information for faster rescue operations.</p>
-            </div>
-            
-            <div className="p-6 sm:p-8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
-              <form onSubmit={handleSubmit(onSubmitRequest)} className="space-y-6">
-                {requestError && (
-                  <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl">
-                    <p className="text-sm font-bold text-red-600 dark:text-red-400">
-                      {requestError}
-                    </p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="form-label">Request Type</label>
-                    <select
-                      {...register('type')}
-                      className="form-input w-full cursor-pointer appearance-none pr-10"
-                    >
-                      <option value="medical_emergency">Medical Emergency</option>
-                      <option value="rescue_request">Rescue Request</option>
-                      <option value="food_water">Food & Water</option>
-                      <option value="shelter">Shelter</option>
-                      <option value="evacuation">Evacuation</option>
-                      <option value="fire">Fire</option>
-                      <option value="trapped">Trapped</option>
-                      <option value="injured">Injured</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-
-                  <FormField
-                    label="People Affected"
-                    name="peopleAffected"
-                    type="number"
-                    register={register}
-                    error={errors.peopleAffected}
-                    min="1"
-                    max="1000"
-                    required
-                  />
-
-                  <div className="md:col-span-2">
-                    <FormField
-                      label="Emergency Description"
-                      name="description"
-                      register={register}
-                      error={errors.description}
-                      placeholder="e.g., We are trapped on the second floor due to flood waters. Two elderly people need assistance."
-                      required
-                      multiline={true}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="md:col-span-2 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                        <MapPinIcon className="h-4 w-4 text-red-500" />
-                        Location Details
-                      </h4>
-                      <button
-                        type="button"
-                        onClick={() => getLocation()}
-                        disabled={geoLoading}
-                        className={`text-xs font-bold flex items-center gap-1 hover:underline disabled:opacity-50 transition-colors ${isLocationCaptured ? 'text-emerald-600' : 'text-indigo-600'}`}
-                      >
-                        <MapIcon className={`h-3 w-3 ${geoLoading ? 'animate-spin' : ''}`} />
-                        {isLocationCaptured ? 'Location Captured ✓' : 'Capture GPS Coordinates (Required)'}
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
-                      <FormField
-                        label="Address"
-                        name="location.address"
-                        register={register}
-                        error={errors.location?.address}
-                        placeholder="House no, Street name"
-                        required
-                      />
-                      <FormField
-                        label="Landmark"
-                        name="location.landmark"
-                        register={register}
-                        placeholder="Near Main Hospital"
-                      />
-                      <FormField
-                        label="City"
-                        name="location.city"
-                        register={register}
-                        error={errors.location?.city}
-                        required
-                      />
-                      <FormField
-                        label="State"
-                        name="location.state"
-                        register={register}
-                        error={errors.location?.state}
-                        required
-                      />
-
-                      <div className="md:col-span-2 grid grid-cols-2 gap-2 mt-2">
-                        <div className="p-3 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase">Latitude</p>
-                          <p className="text-xs font-mono font-bold">{watch('location.coordinates.latitude') || 'Capture required'}</p>
-                        </div>
-                        <div className="p-3 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase">Longitude</p>
-                          <p className="text-xs font-mono font-bold">{watch('location.coordinates.longitude') || 'Capture required'}</p>
-                        </div>
-                        {/* Hidden inputs to ensure react-hook-form registers these values correctly */}
-                        <input type="hidden" {...register('location.coordinates.latitude')} />
-                        <input type="hidden" {...register('location.coordinates.longitude')} />
-                      </div>
-                      {errors.location?.coordinates && (
-                        <p className="md:col-span-2 text-xs text-red-500 font-bold mt-1 text-center">
-                          Please capture your location
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2 space-y-4">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Specific Support</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <label className="checkbox-card group">
-                        <input type="checkbox" {...register('specialRequirements.medical.hasInjuries')} className="hidden" />
-                        <div className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${hasInjuries ? 'bg-indigo-50 border-indigo-500 dark:bg-indigo-500/10' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
-                          <div className={`p-2 rounded-lg ${hasInjuries ? 'bg-indigo-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
-                            <PlusCircleIcon className="h-5 w-5" />
-                          </div>
-                          <span className={`text-sm font-bold ${hasInjuries ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>Injuries</span>
-                        </div>
-                      </label>
-                      <label className="checkbox-card group">
-                        <input type="checkbox" {...register('specialRequirements.accessibility.hasMobilityIssues')} className="hidden" />
-                        <div className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${hasMobilityIssues ? 'bg-indigo-50 border-indigo-500 dark:bg-indigo-500/10' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
-                          <div className={`p-2 rounded-lg ${hasMobilityIssues ? 'bg-indigo-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
-                            <ShieldCheckIcon className="h-5 w-5" />
-                          </div>
-                          <span className={`text-sm font-bold ${hasMobilityIssues ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>Mobility Support</span>
-                        </div>
-                      </label>
-                    </div>
-
-                    <AnimatePresence>
-                      {hasInjuries && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                          <FormField
-                            label="Injury Details"
-                            name="specialRequirements.medical.injuryDetails"
-                            register={register}
-                            error={errors.specialRequirements?.medical?.injuryDetails}
-                            placeholder="Describe wounds, fractures, or conditions"
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-700">
-                  <button
-                    type="button"
-                    onClick={() => setShowRequestForm(false)}
-                    className="px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    disabled={isSubmittingRequest}
-                    className="px-8 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold shadow-lg shadow-red-500/30 transition-all flex items-center gap-2"
-                  >
-                    {isSubmittingRequest ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    ) : 'Broadcast Emergency'}
-                  </button>
-                </div>
-              </form>
+            <div className="flex items-center gap-3">
+              <div
+                className={`rounded-xl bg-slate-50 dark:bg-slate-800 p-2.5 ${stat.color}`}
+              >
+                <stat.icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  {stat.label}
+                </p>
+                <p className={`text-lg font-black ${stat.color}`}>
+                  {stat.value}
+                </p>
+              </div>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        ))}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
-          <div className="card h-full">
-            <div className="card-header flex justify-between items-center">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Active Requests</h3>
-              <Link to="/dashboard/emergency" className="text-xs font-bold text-indigo-600 uppercase tracking-widest hover:underline">
-                View History
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: My Requests */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="lg:col-span-8 space-y-6"
+        >
+          <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-none overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-8 py-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                Recent Emergency Requests
+              </h3>
+              <Link
+                to="/dashboard/emergency"
+                className="group flex items-center gap-1 text-sm font-bold text-red-600 hover:text-red-500 transition-colors"
+              >
+                View All
+                <ArrowRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
-            <div className="card-body">
+
+            <div className="p-6">
               <div className="space-y-4">
-                {requests?.slice(0, 5).map((request) => (
-                  <motion.div 
-                    whileHover={{ scale: 1.01 }}
-                    key={request._id} 
-                    className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-between"
+                {requests?.slice(0, 4).map((request, i) => (
+                  <motion.div
+                    key={request._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.1 }}
+                    className="group relative flex items-start justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-5 transition-all hover:border-red-200 hover:bg-white hover:shadow-lg dark:border-slate-800 dark:bg-slate-800/30 dark:hover:border-red-900/50 dark:hover:bg-slate-800/50"
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{request.type.replace('_', ' ')}</p>
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`mt-1 h-2 w-2 rounded-full ${
+                          request.status === "pending"
+                            ? "bg-amber-500"
+                            : request.status === "assigned"
+                              ? "bg-blue-500"
+                              : request.status === "in_progress"
+                                ? "bg-indigo-500"
+                                : request.status === "resolved"
+                                  ? "bg-emerald-500"
+                                  : "bg-slate-400"
+                        }`}
+                      />
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <p className="font-bold text-slate-900 dark:text-white capitalize">
+                            {request.type}
+                          </p>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              request.status === "pending"
+                                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                : request.status === "assigned"
+                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                  : request.status === "in_progress"
+                                    ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+                                    : request.status === "resolved"
+                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                      : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                            }`}
+                          >
+                            {request.status.replace("_", " ")}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-1">
+                          {request.description}
+                        </p>
+                        <div className="mt-3 flex items-center gap-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                          <span className="flex items-center gap-1">
+                            <MapPinIcon className="h-3.5 w-3.5" />
+                            {request.location?.city || "Location Unknown"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <ClipboardDocumentListIcon className="h-3.5 w-3.5" />
+                            {new Date(
+                              request.timeline?.reportedAt,
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{request.description}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      request.status === 'pending' ? 'bg-slate-100 text-slate-600' :
-                      request.status === 'assigned' ? 'bg-indigo-100 text-indigo-700' :
-                      'bg-emerald-100 text-emerald-700'
-                    }`}>
-                      {request.status}
-                    </span>
+                    <ChevronRightIcon className="h-5 w-5 text-slate-300 transition-colors group-hover:text-red-500" />
                   </motion.div>
                 ))}
+
                 {(!requests || requests.length === 0) && (
-                  <div className="text-center py-12">
-                    <ClipboardDocumentListIcon className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-500 font-medium">No active emergency requests</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="rounded-full bg-slate-50 p-6 dark:bg-slate-800">
+                      <ClipboardDocumentListIcon className="h-10 w-10 text-slate-300" />
+                    </div>
+                    <h4 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+                      No requests yet
+                    </h4>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Need help? Create an emergency request now.
+                    </p>
+                    <button
+                      onClick={() => navigate("/dashboard/emergency?tab=form")}
+                      className="mt-6 flex items-center gap-2 text-sm font-black text-red-600 hover:text-red-500 transition-colors"
+                    >
+                      <PlusCircleIcon className="h-5 w-5" />
+                      CREATE FIRST REQUEST
+                    </button>
                   </div>
                 )}
               </div>
@@ -453,45 +260,187 @@ const CitizenDashboard = () => {
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="space-y-6">
-          <div className="card bg-gradient-to-br from-indigo-600 to-purple-600 text-white border-none shadow-indigo-500/20 shadow-xl overflow-hidden focus-within:ring-0">
-             <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
-             <div className="relative p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-bold">Local Weather</h3>
-                  <CloudIcon className="h-8 w-8 text-white/80" />
+        {/* Right Column: Sidebar */}
+        <div className="lg:col-span-4 space-y-8">
+          {/* Weather Widget */}
+          {weather && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="group relative overflow-hidden rounded-[32px] border border-sky-200 bg-gradient-to-br from-sky-500 to-indigo-600 p-8 text-white shadow-xl shadow-sky-200 dark:border-sky-900/50 dark:shadow-none"
+            >
+              <div className="absolute top-0 right-0 -mr-4 -mt-4 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-8">
+                  <span className="text-sm font-black uppercase tracking-[0.2em] opacity-80">
+                    Current Weather
+                  </span>
+                  <CloudIcon className="h-8 w-8 opacity-80" />
                 </div>
-                <div className="flex items-center gap-4">
-                  <p className="text-5xl font-black">{Math.round(weather?.data?.temperature?.current || 0)}°C</p>
+                <div className="flex items-end gap-2">
+                  <h2 className="text-6xl font-black leading-none">
+                    {Math.round(weather.data?.temperature?.current)}°
+                  </h2>
+                  <span className="text-2xl font-bold mb-1">C</span>
+                </div>
+                <p className="mt-2 text-lg font-bold capitalize opacity-90">
+                  {weather.data?.condition?.description}
+                </p>
+                <div className="mt-8 flex items-center gap-8 border-t border-white/20 pt-6">
                   <div>
-                    <p className="text-sm font-bold uppercase opacity-80">{weather?.data?.condition?.description || 'Clear Sky'}</p>
-                    <p className="text-xs font-medium opacity-60">Humidity: {weather?.data?.humidity}%</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                      Humidity
+                    </p>
+                    <p className="text-lg font-bold">
+                      {weather.data?.humidity}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                      Wind Speed
+                    </p>
+                    <p className="text-lg font-bold">
+                      {weather.data?.wind?.speed} m/s
+                    </p>
                   </div>
                 </div>
-             </div>
-          </div>
+              </div>
+            </motion.div>
+          )}
 
-          <div className="card">
-            <div className="card-header">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <BellAlertIcon className="h-5 w-5 text-amber-500" />
-                Recent Alerts
+          {/* Emergency Contacts */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+            className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-none"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="rounded-xl bg-red-50 p-2.5 text-red-600 dark:bg-red-900/20">
+                <PhoneIcon className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Emergency Contacts
               </h3>
             </div>
-            <div className="card-body p-0">
-              {alerts?.slice(0, 3).map((alert, i) => (
-                <div key={alert._id} className={`p-4 ${i !== alerts.slice(0,3).length - 1 ? 'border-b border-slate-100 dark:border-slate-800' : ''}`}>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">{alert.title}</h4>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{alert.message}</p>
-                  <Link to={`/dashboard/alerts/${alert._id}`} className="inline-block mt-2 text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Read All Warnings</Link>
+            <div className="space-y-4">
+              {[
+                { name: "National Emergency", number: "112" },
+                { name: "Ambulance", number: "108" },
+                { name: "Police", number: "100" },
+                { name: "Disaster Helpline", number: "1078" },
+              ].map((contact) => (
+                <div
+                  key={contact.number}
+                  className="flex items-center justify-between group cursor-pointer"
+                >
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-400 transition-colors group-hover:text-red-600">
+                    {contact.name}
+                  </span>
+                  <span className="rounded-lg bg-slate-50 px-3 py-1 text-sm font-black text-red-600 dark:bg-slate-800">
+                    {contact.number}
+                  </span>
                 </div>
               ))}
             </div>
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  )
-}
+          </motion.div>
 
-export default CitizenDashboard
+          {/* Active Alerts */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 }}
+            className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-none"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600 dark:bg-amber-900/20">
+                <BellAlertIcon className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Recent Alerts
+              </h3>
+            </div>
+            <div className="space-y-4">
+              {alerts?.slice(0, 3).map((alert) => (
+                <div key={alert._id} className="group cursor-pointer">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 transition-colors group-hover:text-red-600">
+                    {alert.title}
+                  </p>
+                  <p className="mt-1 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    {new Date(alert.timeline?.issuedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+              {(!alerts || alerts.length === 0) && (
+                <p className="text-sm font-medium text-slate-500 text-center py-4 italic">
+                  No active alerts at this time.
+                </p>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Active Disasters Section */}
+      <AnimatePresence>
+        {disasters && disasters.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="rounded-[32px] border border-red-100 bg-red-50/50 p-8 dark:border-red-900/30 dark:bg-red-900/10"
+          >
+            <div className="flex items-center gap-3 mb-8">
+              <div className="rounded-xl bg-red-600 p-2.5 text-white shadow-lg shadow-red-600/30">
+                <ExclamationTriangleIcon className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                  Active Disasters
+                </h3>
+                <p className="text-sm font-bold text-red-600">
+                  IMMEDIATE ATTENTION REQUIRED
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {disasters.slice(0, 3).map((disaster) => (
+                <div
+                  key={disaster._id}
+                  className="rounded-2xl border border-white bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80"
+                >
+                  <p className="text-lg font-black text-slate-900 dark:text-white">
+                    {disaster.name}
+                  </p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
+                    {disaster.type}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        disaster.severity === "catastrophic" ||
+                        disaster.severity === "severe"
+                          ? "bg-red-600 text-white"
+                          : disaster.severity === "high"
+                            ? "bg-orange-500 text-white"
+                            : "bg-blue-600 text-white"
+                      }`}
+                    >
+                      {disaster.severity}
+                    </span>
+                    <button className="text-xs font-black text-red-600 hover:underline">
+                      DETAILS
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default CitizenDashboard;

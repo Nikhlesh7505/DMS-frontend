@@ -100,16 +100,16 @@ const ResponderDashboard = () => {
       className="space-y-6"
     >
       <motion.div variants={itemVariants}>
-        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Responder Dashboard</h1>
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">NGO Dashboard</h1>
         <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
-          Manage your tasks, resources, and emergency responses
+       
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Pending Tasks" value={tasks?.pending?.length || 0} icon={WrenchIcon} color="bg-blue-500" />
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {/* <StatCard title="Pending Tasks" value={tasks?.pending?.length || 0} icon={WrenchIcon} color="bg-blue-500" /> */}
         <StatCard title="Assigned Requests" value={requests?.length || 0} icon={ClipboardDocumentListIcon} color="bg-amber-500" />
-        <StatCard title="My Resources" value={resources?.length || 0} icon={TruckIcon} color="bg-emerald-500" />
+        {/* <StatCard title="My Resources" value={resources?.length || 0} icon={TruckIcon} color="bg-emerald-500" /> */}
         <StatCard title="Active Alerts" value={alerts?.length || 0} icon={BellAlertIcon} color="bg-red-500" />
       </div>
 

@@ -28,7 +28,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const token = localStorage.getItem('token')
+    const requestUrl = error.config?.url || ''
+    const isPublicAuthRequest = requestUrl.startsWith('/auth/login') ||
+      requestUrl.startsWith('/auth/register') ||
+      requestUrl.startsWith('/auth/send-otp') ||
+      requestUrl.startsWith('/auth/forgot-password') ||
+      requestUrl.startsWith('/auth/recover-email') ||
+      requestUrl.startsWith('/auth/reset-password-otp')
+
+    if (error.response?.status === 401 && token && !isPublicAuthRequest) {
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
@@ -51,9 +60,8 @@ export const authAPI = {
 
 // ── User API ──────────────────────────────────────────────────────
 export const userAPI = {
-  // FIXED: added getAll alias (component calls userAPI.getAll())
   getAll:               (params)       => api.get('/users', { params }),
-  getUsers:             (params)       => api.get('/users', { params }), // keep old name too
+  getUsers:             (params)       => api.get('/users', { params }),
   getUser:              (id)           => api.get(`/users/${id}`),
   updateProfile:        (data)         => api.put('/users/profile', data),
   update:               (id, data)     => api.put(`/users/${id}`, data),
@@ -66,36 +74,24 @@ export const userAPI = {
   deleteUser:           (id)           => api.delete(`/users/${id}`),
 }
 
-// ── Alert API — FIXED: added all missing methods ──────────────────
+// ── Alert API ─────────────────────────────────────────────────────
 export const alertAPI = {
-  // Fetch alerts — supports ?forUser=ID, ?sentByAdmin=true, filters
   getAll:         (params)     => api.get('/alerts', { params }),
-
-  // Specific named routes (must match backend route order)
   getActive:      ()           => api.get('/alerts/active'),
   getCritical:    ()           => api.get('/alerts/critical'),
   getMyAlerts:    ()           => api.get('/alerts/my-alerts'),
   getUnreadCount: ()           => api.get('/alerts/unread-count'),
   getStatistics:  ()           => api.get('/alerts/statistics/overview'),
   markRead:       (id)         => api.patch(`/alerts/${id}/read`),
-
-  // Single alert
   getById:        (id)         => api.get(`/alerts/${id}`),
-
-  // FIXED: added create — admin broadcasts alert to users
   create:         (data)       => api.post('/alerts', data),
-
-  // FIXED: added update + patch — mark alert as read
   update:         (id, data)   => api.put(`/alerts/${id}`, data),
   patch:          (id, data)   => api.patch(`/alerts/${id}`, data),
-
-  // Alert lifecycle
   acknowledge:    (id, data)   => api.put(`/alerts/${id}/acknowledge`, data),
   resolve:        (id)         => api.put(`/alerts/${id}/resolve`),
   cancel:         (id, data)   => api.put(`/alerts/${id}/cancel`, data),
   cleanupDuplicates: (data)    => api.post('/alerts/cleanup-duplicates', data),
   delete:         (id)         => api.delete(`/alerts/${id}`),
-  
 }
 
 export const notificationAPI = {
@@ -151,9 +147,26 @@ export const donationAPI = {
   getVolunteerTasks: (params)       => api.get('/donations/volunteer-tasks', { params }),
   respondToTask:    (id, action, feedback) => api.patch(`/donations/${id}/respond-task`, { action, feedback }),
   completeTask:     (id)            => api.patch(`/donations/${id}/complete-task`),
-  adminDelete:      (id, feedback)  => api.delete(`/donations/${id}/admin`, { data: { feedback } }),
+  adminDelete:      async (id, feedback) => {
+    try {
+      return await api.patch(`/donations/${id}/admin`, { feedback })
+    } catch (error) {
+      const routeMissing = error.response?.status === 404 &&
+        typeof error.response?.data?.message === 'string' &&
+        error.response.data.message.toLowerCase().includes('route')
+
+      if (!routeMissing) {
+        throw error
+      }
+
+      return api.delete(`/donations/${id}/admin`, {
+        data: { feedback }
+      })
+    }
+  },
   delete:           (id)            => api.delete(`/donations/${id}`),
 }
+
 // ── Emergency Request API ─────────────────────────────────────────
 export const emergencyAPI = {
   getAll:        (params)              => api.get('/emergency', { params }),
@@ -203,12 +216,13 @@ export const taskAPI = {
 
 // ── Dashboard API ─────────────────────────────────────────────────
 export const dashboardAPI = {
-  getPublic:    () => api.get('/dashboard/public'),
-  getAdmin:     () => api.get('/dashboard/admin'),
-  getResponder: () => api.get('/dashboard/responder'),
-  getCitizen:   () => api.get('/dashboard/citizen'),
-  getAnalytics: () => api.get('/dashboard/analytics'),
-  getMapData:   () => api.get('/dashboard/map-data'),
+  getPublic:       () => api.get('/dashboard/public'),
+  getAdmin:        () => api.get('/dashboard/admin'),
+  getResponder:    () => api.get('/dashboard/responder'),
+  getCitizen:      () => api.get('/dashboard/citizen'),
+  getAnalytics:    () => api.get('/dashboard/analytics'),
+  getMapData:      () => api.get('/dashboard/map-data'),
+  getRecentDonors: () => api.get('/dashboard/recent-donors'),
 }
 
 export const utilsAPI = {
