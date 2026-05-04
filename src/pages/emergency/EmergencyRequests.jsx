@@ -133,21 +133,16 @@ const EmergencyRequests = () => {
       if (user?.role === 'citizen') {
         response = await emergencyAPI.getMyRequests()
       } else if (user?.role === 'ngo' || user?.role === 'rescue_team') {
-        // Fetch three sources to cover the full request lifecycle:
-        // 1. Requests formally assigned to this user
-        // 2. Pending requests (available to pick up)
-        // 3. Active requests in intermediate statuses (acknowledged, in_progress, 
-        //    en_route, on_scene) — these may not be assigned yet but are still
-        //    being worked on and should remain visible to responders
-        const [assigned, pending, active] = await Promise.all([
+        // Fetch only requests this responder can act on:
+        // 1. Requests accepted/assigned by this user
+        // 2. Pending requests that are still unclaimed
+        const [assigned, pending] = await Promise.all([
           emergencyAPI.getAssigned(),
-          emergencyAPI.getAll({ status: 'pending' }),
-          emergencyAPI.getAll({ status: 'acknowledged' })
+          emergencyAPI.getAll({ status: 'pending' })
         ])
         const merged = [
           ...assigned.data.data.requests, 
-          ...pending.data.data.requests,
-          ...active.data.data.requests
+          ...pending.data.data.requests
         ]
         // Remove duplicates by _id
         const unique = merged.filter((item, index, self) => 
@@ -371,6 +366,9 @@ const EmergencyRequests = () => {
         type: 'error',
         text: errorMsg
       })
+      if (error.response?.status === 409) {
+        setRequests(prev => prev.filter(req => req._id !== requestId))
+      }
       // Auto-refresh on status mismatch error
       if (errorMsg.toLowerCase().includes('status')) {
         handleAction(requestId, 'refresh')
@@ -825,7 +823,7 @@ const EmergencyRequests = () => {
                         disabled={actionLoading[request._id]}
                         className="inline-flex items-center gap-2 rounded-xl bg-indigo-500/10 px-5 py-2.5 text-sm font-bold text-indigo-600 transition hover:bg-indigo-500/20"
                       >
-                        Acknowledge
+                        Accept
                       </button>
                     )}
                     {(request.status === 'acknowledged' || (request.status === 'pending' && !request.assignment?.assignedTo)) && (

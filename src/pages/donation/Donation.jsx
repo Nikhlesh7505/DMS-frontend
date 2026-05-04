@@ -304,7 +304,7 @@ const Donation = () => {
                             <td className="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                               {donation.quantity} {donation.unit}
                             </td>
-                            <td className="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+                            <td className="px-6 py-4 text-sm font-medium text-slate-600 dark:text--400">
                               {donation.city}, {donation.country}
                             </td>
                             <td className="px-6 py-4">

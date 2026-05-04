@@ -293,7 +293,7 @@ const Register = () => {
               {step === 1 ? 'Join the Network' : step === 2 ? 'Verify Identity' : 'Welcome Aboard!'}
             </h2>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              {step === 1 ? 'Create your account to help or get help.' : step === 2 ? 'We sent a 6-digit code to your phone.' : 'Your account has been created successfully.'}
+              {step === 1 ? 'Create your account to help or get help.' : step === 2 ? 'We sent a 6-digit code to your email.' : 'Your account has been created successfully.'}
             </p>
           </div>
 
@@ -506,7 +506,7 @@ const Register = () => {
                   type="submit"
                   className="btn btn-primary w-full py-4 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2"
                 >
-                  Verify via Phone
+                  Verify via Email
                   <UserPlusIcon className="w-5 h-5" />
                 </motion.button>
               </motion.form>
