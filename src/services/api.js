@@ -140,6 +140,7 @@ export const donationAPI = {
   getFlagged:       ()              => api.get('/donations', { params: { flagged: true } }),
   getById:          (id)            => api.get(`/donations/${id}`),
   update:           (id, data)      => api.put(`/donations/${id}`, data),
+  updatePublicVisibility: (id, data) => api.patch(`/donations/${id}/public-visibility`, data),
   updateStatus:     (id, status, notes) => api.patch(`/donations/${id}/status`, { status, notes }),
   accept:           (id)            => api.post(`/donations/${id}/accept`),
   assignVolunteer:  (id, data)      => api.post(`/donations/${id}/assign-volunteer`, data),

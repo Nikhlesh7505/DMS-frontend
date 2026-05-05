@@ -371,7 +371,7 @@ const Register = () => {
                       >
                         <option value="citizen">Citizen</option>
                         <option value="ngo">NGO / Organization</option>
-                        <option value="rescue_team">Rescue Team</option>
+                        {/* <option value="rescue_team">Rescue Team</option> */}
                         <option value="volunteer">Volunteer</option>
                       </select>
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">

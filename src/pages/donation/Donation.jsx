@@ -53,6 +53,11 @@ const Donation = () => {
   const [states, setStates] = useState([])
   const [cities, setCities] = useState([])
   const [loadingGeo, setLoadingGeo] = useState({ countries: false, states: false, cities: false })
+  const [completedDonation, setCompletedDonation] = useState(null)
+  const [sharePublicly, setSharePublicly] = useState(false)
+  const [sharingChoiceLoading, setSharingChoiceLoading] = useState(false)
+  const [sharingChoiceError, setSharingChoiceError] = useState('')
+  const [sharingAction, setSharingAction] = useState('')
 
   const getFormValues = (donation = null) => ({
     country: donation?.country || '',
@@ -191,7 +196,10 @@ const Donation = () => {
       if (editingDonation) {
         await donationAPI.update(editingDonation._id, payload)
       } else {
-        await donationAPI.create(payload)
+        const response = await donationAPI.create(payload)
+        setCompletedDonation(response.data?.data?.donation)
+        setSharePublicly(false)
+        setSharingChoiceError('')
       }
 
       setIsFormOpen(false)
@@ -225,6 +233,44 @@ const Donation = () => {
       } catch (err) {
         console.error('Error deleting donation:', err)
       }
+    }
+  }
+
+  const handlePublicChoice = async (publicVisibility) => {
+    if (!completedDonation?._id) return
+
+    try {
+      setSharingChoiceLoading(true)
+      setSharingAction(publicVisibility ? 'public' : 'private')
+      setSharingChoiceError('')
+      await donationAPI.updatePublicVisibility(completedDonation._id, {
+        publicVisibility,
+      })
+      setCompletedDonation(null)
+      await fetchDonations()
+    } catch (err) {
+      setSharingChoiceError(
+        err.response?.data?.message ||
+        'Unable to save your sharing preference. Please try again.'
+      )
+    } finally {
+      setSharingChoiceLoading(false)
+      setSharingAction('')
+    }
+  }
+
+  const handleHistoryPublicChoice = async (donation, publicVisibility) => {
+    try {
+      setSharingChoiceError('')
+      await donationAPI.updatePublicVisibility(donation._id, {
+        publicVisibility,
+      })
+      await fetchDonations()
+    } catch (err) {
+      setSharingChoiceError(
+        err.response?.data?.message ||
+        'Unable to save your sharing preference. Please try again.'
+      )
     }
   }
 
@@ -288,6 +334,7 @@ const Donation = () => {
                       <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Volume</th>
                       <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Location</th>
                       <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Public Feed</th>
                       <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Control</th>
                     </tr>
                   </thead>
@@ -312,6 +359,29 @@ const Donation = () => {
                                 <status.icon className="w-3 h-3" />
                                 {donation.status}
                               </span>
+                            </td>
+                            <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex flex-col gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleHistoryPublicChoice(donation, !donation.publicVisibility)}
+                                  className={`relative h-7 w-12 rounded-full transition ${
+                                    donation.publicVisibility ? 'bg-emerald-500' : 'bg-slate-600'
+                                  }`}
+                                  title={donation.publicVisibility ? 'Hide from public feed' : 'Show on public feed'}
+                                >
+                                  <span
+                                    className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${
+                                      donation.publicVisibility ? 'left-6' : 'left-1'
+                                    }`}
+                                  />
+                                </button>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                  donation.publicVisibility ? 'text-emerald-500' : 'text-slate-500'
+                                }`}>
+                                  {donation.publicVisibility ? 'Public' : 'Private'}
+                                </span>
+                              </div>
                             </td>
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end gap-1">
@@ -338,7 +408,7 @@ const Donation = () => {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="bg-slate-50/50 dark:bg-slate-800/20"
                               >
-                                <td colSpan={5} className="px-6 py-4">
+                                <td colSpan={6} className="px-6 py-4">
                                   <div className="rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/5 p-5">
                                     <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
                                       <TruckIcon className="w-5 h-5 text-indigo-500" /> Handling Organization
@@ -402,6 +472,100 @@ const Donation = () => {
       </div>
 
       <AnimatePresence>
+        {completedDonation && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-white/15 bg-white shadow-2xl dark:bg-slate-900"
+            >
+              <div className="border-b border-slate-100 p-8 dark:border-slate-800">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
+                  <CheckCircleIcon className="h-8 w-8" />
+                </div>
+                <h2 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                  Donation Completed
+                </h2>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                  Your contribution has been recorded. Choose whether this donation should appear on the public feed.
+                </p>
+              </div>
+
+              <div className="space-y-6 p-8">
+                <button
+                  type="button"
+                  onClick={() => setSharePublicly((current) => !current)}
+                  className={`flex w-full items-center justify-between rounded-2xl border p-5 text-left transition ${
+                    sharePublicly
+                      ? 'border-emerald-400 bg-emerald-500/10'
+                      : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50'
+                  }`}
+                >
+                  <span>
+                    <span className="block text-base font-black text-slate-950 dark:text-white">
+                      Show my donation publicly
+                    </span>
+                    <span className="mt-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
+                      This is off by default. Turn it on only if you want your participation displayed on the public donation feed.
+                    </span>
+                  </span>
+                  <span
+                    className={`relative h-7 w-12 rounded-full transition ${
+                      sharePublicly ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${
+                        sharePublicly ? 'left-6' : 'left-1'
+                      }`}
+                    />
+                  </span>
+                </button>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                    <span className="font-bold capitalize text-slate-900 dark:text-white">
+                      {completedDonation.category}
+                    </span>
+                    <span className="font-black text-emerald-600 dark:text-emerald-400">
+                      {completedDonation.quantity} {completedDonation.unit}
+                    </span>
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-xs font-medium text-slate-500">
+                    {completedDonation.description}
+                  </p>
+                </div>
+
+                {sharingChoiceError && (
+                  <p className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm font-semibold text-rose-500">
+                    {sharingChoiceError}
+                  </p>
+                )}
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    disabled={sharingChoiceLoading || !sharePublicly}
+                    onClick={() => handlePublicChoice(true)}
+                    className="rounded-2xl bg-indigo-600 px-5 py-4 text-sm font-black text-white shadow-xl shadow-indigo-500/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {sharingChoiceLoading && sharingAction === 'public' ? 'Saving...' : 'Allow & Share Publicly'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={sharingChoiceLoading}
+                    onClick={() => handlePublicChoice(false)}
+                    className="rounded-2xl border border-slate-200 px-5 py-4 text-sm font-black text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 disabled:opacity-60"
+                  >
+                    {sharingChoiceLoading && sharingAction === 'private' ? 'Saving...' : 'Keep Private'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {isFormOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
             <motion.div 
