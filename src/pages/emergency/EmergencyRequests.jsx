@@ -21,7 +21,8 @@ import {
   TrashIcon,
   XMarkIcon,
   ArrowPathIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline'
 import EmergencyRequestSidePanel from './EmergencyRequestSidePanel'
 
@@ -126,8 +127,14 @@ const EmergencyRequests = () => {
     }))
   }, [user?.location?.city, user?.location?.state, user?.role])
 
-  const loadRequests = useCallback(async () => {
-    setLoading(true)
+  // Track whether initial data has been loaded (ref avoids re-creating the callback)
+  const hasFetchedOnce = React.useRef(false)
+
+  const loadRequests = useCallback(async (isBackground = false) => {
+    // Only show the full-page spinner on the very first load
+    if (!isBackground && !hasFetchedOnce.current) {
+      setLoading(true)
+    }
     try {
       let response
       if (user?.role === 'citizen') {
@@ -149,6 +156,7 @@ const EmergencyRequests = () => {
           index === self.findIndex((t) => t._id === item._id)
         )
         setRequests(unique)
+        hasFetchedOnce.current = true
         setLoading(false)
         return
       } else {
@@ -157,21 +165,25 @@ const EmergencyRequests = () => {
       }
       setRequests(response.data.data.requests)
       setFeedback(null)
+      hasFetchedOnce.current = true
     } catch (error) {
       console.error('Failed to fetch requests:', error)
-      setFeedback({
-        type: 'error',
-        text: error.response?.data?.message || 'Failed to fetch emergency requests.'
-      })
+      // Only show error feedback if this is NOT a silent background refresh
+      if (!isBackground) {
+        setFeedback({
+          type: 'error',
+          text: error.response?.data?.message || 'Failed to fetch emergency requests.'
+        })
+      }
     } finally {
       setLoading(false)
     }
   }, [filter, user?.role])
 
   useEffect(() => {
-    loadRequests()
-    // Periodic refresh every 30 seconds
-    const intervalId = setInterval(loadRequests, 30000)
+    loadRequests(false) // initial load – shows spinner
+    // Background refresh every 60 seconds (silent, no spinner)
+    const intervalId = setInterval(() => loadRequests(true), 60000)
     return () => clearInterval(intervalId)
   }, [loadRequests])
 
@@ -395,8 +407,7 @@ const EmergencyRequests = () => {
           </h1>
           <button 
             onClick={() => {
-              setLoading(true)
-              loadRequests()
+              loadRequests(false)
             }}
             className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 transition-all active:rotate-180 duration-500"
             title="Refresh List"
@@ -763,7 +774,7 @@ const EmergencyRequests = () => {
         {/* Requests List */}
         <div className="space-y-6">
           {requests.map((request) => (
-            <div key={request._id} className="group relative bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800 rounded-[32px] p-6 transition-all hover:shadow-2xl hover:border-slate-300 dark:hover:border-slate-700">
+            <div key={request._id} className={`group relative backdrop-blur-xl border rounded-[32px] p-6 transition-all hover:shadow-2xl overflow-hidden ${request.status === 'resolved' ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/60 dark:border-emerald-800/40 hover:border-emerald-300 dark:hover:border-emerald-700' : 'bg-white/70 dark:bg-slate-900/60 border-slate-200/60 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'}`}>
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-start gap-5">
                   <div className="flex-shrink-0 p-4 bg-indigo-500/10 dark:bg-slate-800 rounded-2xl border border-indigo-500/20 dark:border-slate-700 text-indigo-600 dark:text-indigo-400">
@@ -800,8 +811,34 @@ const EmergencyRequests = () => {
                   </span>
                 </div>
               </div>
+
+              {/* ── Resolved Completion Banner (for NGO/rescue_team) ── */}
+              {request.status === 'resolved' && (user?.role === 'ngo' || user?.role === 'rescue_team' || user?.role === 'admin') && (
+                <div className="mt-4 flex items-center gap-4 px-5 py-4 bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-200/60 dark:border-emerald-700/30 rounded-2xl">
+                  <div className="flex-shrink-0 p-2.5 bg-emerald-500 rounded-xl shadow-[0_4px_12px_rgba(16,185,129,0.35)]">
+                    <CheckCircleIcon className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">Request Completed</p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-emerald-600/80 dark:text-emerald-500/80 font-medium">
+                      {request.resolution?.outcome && (
+                        <span className="capitalize">Outcome: <strong>{request.resolution.outcome.replace('_', ' ')}</strong></span>
+                      )}
+                      {request.timeline?.resolvedAt && (
+                        <span>Resolved: <strong>{new Date(request.timeline.resolvedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</strong></span>
+                      )}
+                      {request.resolution?.resolvedBy?.name && (
+                        <span>By: <strong>{request.resolution.resolvedBy.name}</strong></span>
+                      )}
+                    </div>
+                    {request.resolution?.notes && (
+                      <p className="mt-1.5 text-xs text-emerald-600/70 dark:text-emerald-500/60 line-clamp-1">{request.resolution.notes}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               
-              <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800/60 flex flex-wrap items-center justify-end gap-4">
+              <div className={`${request.status === 'resolved' ? 'mt-4 pt-4' : 'mt-8 pt-6'} border-t border-slate-200 dark:border-slate-800/60 flex flex-wrap items-center justify-end gap-4`}>
                 {canDeleteRequest(request, user?.role) && (
                   <button
                     type="button"

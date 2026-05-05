@@ -231,7 +231,7 @@ const NgoDonations = () => {
                       </span>
                     </div>
 
-                    <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-2 mb-6 min-h-[40px]">
+                    <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 min-h-[40px] whitespace-pre-line">
                       {donation.description || 'No additional description'}
                     </p>
 

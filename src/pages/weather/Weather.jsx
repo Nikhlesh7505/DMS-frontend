@@ -213,6 +213,7 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { useAuth } from '../../contexts/AuthContext'
 
 // ── Default cities to show in the grid ──────────────────────────
 const DEFAULT_CITIES = [
@@ -277,27 +278,7 @@ const fetchWeatherByCity = async (cityName) => {
   return fetchWeatherByCoords(latitude, longitude, name, admin1 || '', country || '')
 }
 
-// ── Reverse geocode coords → city name ──────────────────────────
-const reverseGeocode = async (latitude, longitude) => {
-  const res  = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=10&addressdetails=1`
-  )
-  const data = await res.json()
-  const city =
-    data.address?.city         ||
-    data.address?.city_district||
-    data.address?.town         ||
-    data.address?.municipality ||
-    data.address?.village      ||
-    data.address?.suburb       ||
-    data.address?.county       ||
-    'Your Location'
-  return {
-    city,
-    state  : data.address?.state   || '',
-    country: data.address?.country || '',
-  }
-}
+import { geocodingAPI } from '../../services/geocoding.service'
 
 // ════════════════════════════════════════════════════════════════
 const Weather = () => {
@@ -310,6 +291,8 @@ const Weather = () => {
   const [geoWeather,    setGeoWeather]    = useState(null)
   const [geoLoading,    setGeoLoading]    = useState(true)
   const [geoError,      setGeoError]      = useState(null)
+  
+  const { user } = useAuth()
 
   // Search
   const [searchQuery,   setSearchQuery]   = useState('')
@@ -342,28 +325,53 @@ const Weather = () => {
     }
   }
 
+  // ── Fallback to user profile location ────────────────────────
+  const fallbackToProfileLocation = async (errorMsg) => {
+    if (user?.location?.city) {
+      try {
+        const weather = await fetchWeatherByCity(user.location.city)
+        setGeoWeather(weather)
+        setGeoError(errorMsg + ` Showing weather for your profile city (${user.location.city}) instead.`)
+      } catch (err) {
+        setGeoError(`${errorMsg} Also failed to load weather for your profile city.`)
+      }
+    } else {
+      setGeoError(`${errorMsg} Update your profile location to see local weather as a fallback.`)
+    }
+    setGeoLoading(false)
+  }
+
   // ── Detect user location ─────────────────────────────────────
   const detectUserLocation = () => {
+    setGeoLoading(true)
+    setGeoError(null)
     if (!navigator.geolocation) {
-      setGeoError('Geolocation is not supported by your browser.')
-      setGeoLoading(false)
+      fallbackToProfileLocation('Geolocation is not supported by your browser.')
       return
     }
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         try {
-          const { city, state, country } = await reverseGeocode(coords.latitude, coords.longitude)
+          // Use the robust reverseGeocode service
+          const geoResult = await geocodingAPI.reverseGeocode(coords.latitude, coords.longitude)
+          const { city, state, country, provider } = geoResult;
+
           const weather = await fetchWeatherByCoords(coords.latitude, coords.longitude, city, state, country)
+          
+          // Attach accuracy for UI warning
+          weather.accuracy = coords.accuracy;
+          weather.isLowAccuracy = coords.accuracy > 5000;
+          weather.provider = provider;
+
           setGeoWeather(weather)
-        } catch (err) {
-          setGeoError('Could not fetch weather for your location.')
-        } finally {
+          setGeoError(null)
           setGeoLoading(false)
+        } catch (err) {
+          fallbackToProfileLocation('Could not fetch weather for your exact location.')
         }
       },
       () => {
-        setGeoError('Location access denied. Allow location permission to see your local weather.')
-        setGeoLoading(false)
+        fallbackToProfileLocation('Location access denied.')
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     )
@@ -457,9 +465,14 @@ const Weather = () => {
             <div className="p-4 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl text-white">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <MapPinIcon className="h-5 w-5" />
                     <h3 className="text-xl font-bold">{geoWeather.city}</h3>
+                    {geoWeather.isLowAccuracy && (
+                      <span className="bg-yellow-500 text-yellow-900 text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full">
+                        Approximate
+                      </span>
+                    )}
                   </div>
                   {(geoWeather.state || geoWeather.country) && (
                     <p className="text-emerald-100 text-sm mt-0.5">
@@ -498,7 +511,7 @@ const Weather = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search any city (e.g. Bareilly, London, Tokyo...)"
-                className="w-full pl-10 pr-10 py-2.5 border border-slate-200/60 dark:border-slate-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 pl-10 pr-10 py-2.5 border border-slate-200/60 dark:border-slate-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
               />
               {searchQuery && (
                 <button type="button" onClick={clearSearch}

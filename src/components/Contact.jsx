@@ -11,9 +11,9 @@ import {
 } from "@heroicons/react/24/outline";
 
 const contacts = [
-  { icon: PhoneIcon, label: "Emergency Hotline", value: "1800-DISASTER", color: "text-red-400" },
-  { icon: EnvelopeIcon, label: "Email Support", value: "help@disastershield.in", color: "text-indigo-400" },
-  { icon: MapPinIcon, label: "Headquarters", value: "New Delhi, India", color: "text-green-400" },
+  { icon: PhoneIcon, label: "Emergency Hotline", value: "112", color: "text-red-400" },
+  { icon: EnvelopeIcon, label: "Email Support", value: "nikhileshkm956@gmail.com", color: "text-indigo-400" },
+  { icon: MapPinIcon, label: "Headquarters", value: "Bareilly, Uttar Pradesh, India", color: "text-green-400" },
 ];
 
 export default function ContactSection() {

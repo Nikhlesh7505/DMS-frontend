@@ -31,9 +31,9 @@ export default function Footer() {
               </div>
 
               <span className="text-white font-extrabold text-lg">
-                Disaster
+                DM
                 <span className="bg-gradient-to-r from-indigo-400 to-pink-400 bg-clip-text text-transparent">
-                  Shield
+                  S
                 </span>
               </span>
             </motion.div>
@@ -89,7 +89,7 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
 
           <p className="text-gray-600 text-xs">
-            © 2025 DisasterShield. All rights reserved.
+            © 2026 DMS. All rights reserved.
           </p>
 
           <div className="flex items-center gap-2">

@@ -136,6 +136,9 @@ const AdminDashboard = () => {
     value: s.count
   })) || []
 
+  // Emergency History: Total number of requests in the system
+  const totalEmergencyHistory = requestChartData.reduce((acc, curr) => acc + curr.value, 0);
+
   return (
     <motion.div 
       variants={containerVariants}
@@ -154,7 +157,7 @@ const AdminDashboard = () => {
         <StatCard title="Total Users" value={counts?.totalUsers || 0} icon={UsersIcon} link="/dashboard/users" color="bg-blue-500" />
         <StatCard title="Active Disasters" value={counts?.activeDisasters || 0} icon={ExclamationTriangleIcon} link="/dashboard/disasters" color="bg-red-500" />
         <StatCard title="Active Alerts" value={counts?.activeAlerts || 0} icon={BellAlertIcon} link="/dashboard/alerts" color="bg-amber-500" />
-        <StatCard title="Emergency History" value={counts?.pendingRequests || 0} icon={ClipboardDocumentListIcon} link="/dashboard/emergency" color="bg-green-500" />
+        <StatCard title="Emergency History" value={totalEmergencyHistory} icon={ClipboardDocumentListIcon} link="/dashboard/emergency" color="bg-green-500" />
        
       </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

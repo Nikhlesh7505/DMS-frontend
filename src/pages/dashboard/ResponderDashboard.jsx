@@ -160,7 +160,17 @@ const ResponderDashboard = () => {
           <div className="card-body">
             <div className="space-y-4">
               {requests?.slice(0, 5).map((request) => (
-                <motion.div whileHover={{ scale: 1.02 }} key={request._id} className="flex items-start justify-between p-4 bg-white/40 dark:bg-white/5 border border-white/50 dark:border-white/10 rounded-2xl backdrop-blur-sm">
+                <motion.div 
+                  whileHover={{ 
+                    y: -5,
+                    boxShadow: request.priority === 'critical' || request.priority === 'life_threatening' ? "0 20px 40px rgba(239,68,68,0.2)" : 
+                               request.priority === 'high' ? "0 20px 40px rgba(249,115,22,0.2)" : 
+                               "0 20px 40px rgba(59,130,246,0.2)",
+                    transition: { duration: 0.2 } 
+                  }} 
+                  key={request._id} 
+                  className="flex items-start justify-between p-4 bg-white/40 dark:bg-white/5 border border-white/50 dark:border-white/10 rounded-2xl backdrop-blur-sm transition-colors hover:bg-white/60 dark:hover:bg-white/10 cursor-pointer"
+                >
                   <div>
                     <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">{request.type}</p>
                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{request.citizen?.name}</p>
@@ -202,7 +212,16 @@ const ResponderDashboard = () => {
           <div className="card-body">
             <div className="space-y-3">
               {alerts?.slice(0, 5).map((alert) => (
-                <motion.div whileHover={{ scale: 1.01 }} key={alert._id} className={`p-3 rounded-xl border-l-4 backdrop-blur-sm ${
+                <motion.div 
+                  whileHover={{ 
+                    y: -3,
+                    boxShadow: alert.severity === 'danger' ? "0 15px 30px rgba(239,68,68,0.15)" : 
+                               alert.severity === 'warning' ? "0 15px 30px rgba(245,158,11,0.15)" : 
+                               "0 15px 30px rgba(59,130,246,0.15)",
+                    transition: { duration: 0.2 }
+                  }} 
+                  key={alert._id} 
+                  className={`p-3 rounded-xl border-l-4 backdrop-blur-sm cursor-pointer transition-colors ${
                   alert.severity === 'danger' ? 'bg-red-500/10 border-red-500' :
                   alert.severity === 'warning' ? 'bg-amber-500/10 border-amber-500' :
                   'bg-blue-500/10 border-blue-500'
@@ -226,7 +245,17 @@ const ResponderDashboard = () => {
           <div className="card-body">
             <div className="space-y-3">
               {disasters?.slice(0, 5).map((disaster) => (
-                <motion.div whileHover={{ scale: 1.01 }} key={disaster._id} className="flex items-center p-3 bg-white/30 dark:bg-white/5 border border-white/20 rounded-xl backdrop-blur-md">
+                <motion.div 
+                  whileHover={{ 
+                    y: -5,
+                    boxShadow: disaster.severity === 'catastrophic' || disaster.severity === 'severe' ? "0 20px 40px rgba(239,68,68,0.2)" : 
+                               disaster.severity === 'high' ? "0 20px 40px rgba(249,115,22,0.2)" : 
+                               "0 20px 40px rgba(59,130,246,0.2)",
+                    transition: { duration: 0.2 }
+                  }} 
+                  key={disaster._id} 
+                  className="flex items-center p-3 bg-white/30 dark:bg-white/5 border border-white/20 rounded-xl backdrop-blur-md cursor-pointer transition-colors hover:bg-white/50 dark:hover:bg-white/10"
+                >
                   <div className="bg-red-500/20 p-2 rounded-xl mr-3">
                     <ExclamationTriangleIcon className="h-5 w-5 text-red-600 dark:text-red-500" />
                   </div>

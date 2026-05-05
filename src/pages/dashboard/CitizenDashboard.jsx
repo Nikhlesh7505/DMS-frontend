@@ -172,13 +172,18 @@ const CitizenDashboard = () => {
             <div className="p-6">
               <div className="space-y-4">
                 {requests?.slice(0, 4).map((request, i) => (
-                  <motion.div
-                    key={request._id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                    className="group relative flex items-start justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-5 transition-all hover:border-red-200 hover:bg-white hover:shadow-lg dark:border-slate-800 dark:bg-slate-800/30 dark:hover:border-red-900/50 dark:hover:bg-slate-800/50"
-                  >
+                    <motion.div
+                      key={request._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + i * 0.1 }}
+                      whileHover={{
+                        y: -8,
+                        boxShadow: "0 25px 50px rgba(99,102,241,0.15)",
+                        transition: { duration: 0.3, ease: "easeOut" },
+                      }}
+                      className="group relative flex items-start justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-5 transition-all dark:border-slate-800 dark:bg-slate-800/30"
+                    >
                     <div className="flex items-start gap-4">
                       <div
                         className={`mt-1 h-2 w-2 rounded-full ${
@@ -406,9 +411,14 @@ const CitizenDashboard = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {disasters.slice(0, 3).map((disaster) => (
-                <div
+                <motion.div
                   key={disaster._id}
-                  className="rounded-2xl border border-white bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80"
+                  whileHover={{
+                    y: -10,
+                    boxShadow: "0 30px 60px rgba(239,68,68,0.3)",
+                    transition: { duration: 0.3, ease: "easeOut" },
+                  }}
+                  className="rounded-2xl border border-white bg-white/80 p-6 transition-all dark:border-slate-800 dark:bg-slate-900/80 cursor-pointer"
                 >
                   <p className="text-lg font-black text-slate-900 dark:text-white">
                     {disaster.name}
@@ -433,7 +443,7 @@ const CitizenDashboard = () => {
                       DETAILS
                     </button>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
